@@ -1,6 +1,6 @@
 import pandas as pd
-from pipeline_functions import pipeline_functions_dict
-from connector import Connector
+from dsl_spa.pipeline.pipeline_functions import pipeline_functions_dict
+from dsl_spa.pipeline.connector import Connector
 import altair as alt
 from typing import Any
 

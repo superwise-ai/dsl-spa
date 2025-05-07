@@ -24,7 +24,7 @@ pip install dsl-spa
 A standard pipeline can be imported with
 
 ```
-from dsl-spa.pipeline import StandardPipeline
+from dsl-spa.pipeline.pipeline import StandardPipeline
 ```
 
 For more details on constructing a pipeline, reference [Building a Pipeline](https://github.com/superwise-ai/dsl-spa/blob/main/docs/Creating_a_Pipeline_Schema.md).

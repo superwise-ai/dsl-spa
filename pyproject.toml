@@ -19,5 +19,5 @@ Homepage = "https://github.com/superwise-ai/dsl-spa"
 Issues = "https://github.com/superwise-ai/dsl-spa/issues"
 
 [build-system]
-requires = ["setuptools >= 77.0.3"]
+requires = ["setuptools >= 77.0.3","pandas >= 2.0.0","altair >= 5.3.0","SQLAlchemy >= 2.0.0"]
 build-backend = "setuptools.build_meta"
