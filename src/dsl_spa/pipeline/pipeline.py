@@ -318,10 +318,23 @@ class BasicPipeline(Pipeline):
             bool: Whether the fields required for the query are in the pipeline
         """
         if "required_fields" in query.keys():
-            for field in query["required_fields"]:
-                if not self.check_for_field(field):
-                    return False
+            if not self.has_required_fields(query["required_fields"]):
+                return False
         return True
+    
+    def check_query_for_exclude_fields(self, query: dict) -> bool:
+        """Checks if the required fields in the query are in the pipeline's fields
+
+        Args:
+            query (dict): The schema dictionary of the query
+
+        Returns:
+            bool: Whether the fields indicating the query be excluded are in the pipeline
+        """
+        if "exclude_fields" in query.keys():
+            if self.has_required_fields(query["exclude_fields"]):
+                return True
+        return False
     
     def build_query(self, query: dict) -> str:
         """Contructs a query using its query dict definition from the schema
@@ -370,7 +383,8 @@ class BasicPipeline(Pipeline):
             bool: Whether the necssary data is in the pipeline to be run
         """
         has_required_fields = self.check_query_for_required_fields(query)
-        return has_required_fields
+        has_exclude_fields = self.check_query_for_exclude_fields(query)
+        return has_required_fields and not has_exclude_fields
         
     def run_query(self, query: dict, sql_query: str):
         """Runs the sql_query based on the connection defined in the query schema.
@@ -658,6 +672,25 @@ class BasicPipeline(Pipeline):
         self.log.append(f"Applying arithmetic operation: {operation}{by} to {column}")
         return data
     
+    def validate_function_should_run(self, process: dict) -> bool:
+        """Validates the operation should run base on required fields and exclude fields
+
+        Args:
+            process (dict): Dictionary for operation
+
+        Returns:
+            bool: Whether the operation should run or not
+        """
+        has_required = True
+        if "required_fields" in process.keys():
+            if not self.has_required_fields(process["required_fields"]):
+                has_required = False
+        should_exclude = False
+        if "exclude_fields" in process.keys():
+            if self.has_required_fields(process["exclude_fields"]):
+                should_exclude = True
+        return has_required and not should_exclude
+    
     def create_dataset(self, dataset: dict) -> pd.DataFrame:
         """Creates dataset 
 
@@ -672,6 +705,9 @@ class BasicPipeline(Pipeline):
         """
         data = None
         for process in dataset["create"]:
+            should_run = self.validate_function_should_run(process)
+            if not should_run:
+                continue
             process_type = process["type"]
             if process_type == "query":
                 data = self.create_dataset_from_query(process)
