@@ -90,6 +90,21 @@ class Pipeline:
                 # Only set field if not already populated
                 if key not in d.keys():
                     d[key] = default_dict[key]
+                    
+    def check_if_field_definition(d: dict) -> bool:
+        """Determines whether the given dict d is a field definition or not
+
+        Args:
+            d (dict): Dictionary to check
+
+        Returns:
+            bool: Whether the dict is a field definition or not
+        """
+        field_names = ["name", "type", "required", "description"]
+        for field_name in field_names:
+            if field_name not in d.keys():
+                return False
+        return True
 
     def get_default_values(field_dict: dict) -> dict:
         """Retrieves all the default values from the schema.
@@ -102,15 +117,15 @@ class Pipeline:
         """
         default_dict = {}
         for key in field_dict.keys():
-            if isinstance(field_dict[key], list):
-                for d in field_dict[key]:
-                    if "default" in d.keys():
-                        if key == "base":
-                            default_dict[d["name"]] = d["default"]
-                        else:
-                            if key not in default_dict.keys():
-                                default_dict[key] = {}
-                            default_dict[key][d["name"]] = d["default"]
+            if Pipeline.check_if_field_definition(field_dict[key]):
+                d = field_dict[key]
+                if "default" in d.keys():
+                    if key == "base":
+                        default_dict[d["name"]] = d["default"]
+                    else:
+                        if key not in default_dict.keys():
+                            default_dict[key] = {}
+                        default_dict[key][d["name"]] = d["default"]
             else:
                 default_dict[key] = Pipeline.get_default_values(field_dict[key])
         return default_dict
@@ -135,7 +150,7 @@ class Pipeline:
                 return []
         fields_list = []
         for key in fields_dict.keys():
-            if isinstance(fields_dict[key],list):
+            if Pipeline.check_if_field_definition(fields_dict[key]):
                 for d in fields_dict[key]:
                     if root == "":
                         fields_list.extend(self.build_required_fields_list(d,root=f"{key}"))
