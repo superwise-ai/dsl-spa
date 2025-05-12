@@ -33,7 +33,7 @@ class Pipeline:
             json_schema (dict): The dictionary of the json schema defining the pipeline
             connectors (list[Connector]): List of connectors
         """
-        self.pipeline_type = json_schema["pipeline_name"]
+        self.pipeline_name = json_schema["pipeline_name"]
         self.field_dict = fields_input_dict
         self.schema = json_schema
         self.connectors = connectors
@@ -251,6 +251,7 @@ class BasicPipeline(Pipeline):
         self.dataset_summary_remove_commas = {}
         self.functions = functions
         self.visualizations = {}
+        self.filters = None
     
     def add_fields_to_clause(self,clause: str, sanitize_for_sql: bool = False) -> str:
         """Replaces all instances of {field_name} in clause.
@@ -479,21 +480,31 @@ class BasicPipeline(Pipeline):
                 include_any = data_filter["include_any"]
                 if include_any:
                     values = ['Any'] + values
+                    values = list(map(lambda x: str(x), values))
                 self.filters[name] = {
                     "display_name": display_name,
                     "column_name": column_name,
                     "values": values,
                     "include_any": include_any,
-                    "selected_value": "Any"
+                    "selected_value": values[0]
                 }
-        
-    def update_filter(self, filter_name: str, value: Any):
+    
+    def get_filters(self):
+        """Gets Filters for Pipeline
+        """
+        if self.filters is None:
+            raise PipelineException("Filters not initialized. Use Dashboard Pipeline or call load_filter() in your custom pipeline.")
+        return self.filters
+    
+    def update_filter(self, filter_name: str, value: str):
         """Updates a filter_name to value
 
         Args:
             filter_name (str): Name of filter
             value (Any): Value to set filter_name to
         """
+        if self.filters is None:
+            raise PipelineException("Filters not initialized. Use Dashboard Pipeline or call load_filter() in your custom pipeline.")
         self.filters[filter_name]["selected_value"] = value
         
     def check_dataset_for_required_fields(self, dataset: dict) -> bool:
@@ -855,25 +866,25 @@ class BasicPipeline(Pipeline):
         Returns:
             dict: Visualizations
         """
-        if self.visualizations is None:
-            return {}
         return self.visualizations
     
     def build_visualizations(self):
         """Builds all visualizations as defined in the schema
         """
         if "visualizations" not in self.schema.keys():
-            self.visualizations = None
             return
         visualizations = self.schema["visualizations"]
         for v in visualizations:
             self.add_variables_to_graph_titles(v)
             vega_lite_dict = self.get_visualization_dict()
             title = v["title"]
-            self.visualizations[title] = vega_lite_dict            
+            self.visualizations[title] = {
+                "vega_lite": vega_lite_dict,
+                "description": v["description"]
+            }
     
     def get_visualization_dict(self, visualization: dict, dataset: pd.DataFrame) -> dict:
-        """Gets vega-lite dict given visualization dict and dataset for visualization
+        """Gets vega-lite dict using visualization dict and dataset for visualization
 
         Args:
             visualization (dict): Visualization dict
