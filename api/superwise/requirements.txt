@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+pydantic
+pydantic-settings
+requests
+pandas
+pyodbc
+sqlalchemy-bigquery
+pillow
+altair
+vl-convert-python
+superwise-api
+dsl-spa
