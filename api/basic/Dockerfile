@@ -19,6 +19,7 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 # Copy the current directory contents into the container at /app
 COPY *.py ./
 COPY connectors.json ./
+COPY .env ./
 
 # Add mssql-tools to PATH
 ENV PATH="${PATH}:/opt/mssql-tools/bin"
