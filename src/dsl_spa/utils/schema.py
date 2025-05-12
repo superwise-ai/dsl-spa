@@ -721,7 +721,8 @@ class PieChart(Visualization):
             "dataset": self.dataset,
             "title": self.title,
             "value_column": self.value_column,
-            "label_column": self.label_column
+            "label_column": self.label_column,
+            "description": self.description
         }
         
 class LineGraph(Visualization):
@@ -752,7 +753,8 @@ class LineGraph(Visualization):
             "dataset": self.dataset,
             "title": self.title,
             "x_axis": self.x_axis,
-            "y_axis": self.y_axis
+            "y_axis": self.y_axis,
+            "description": self.description
         }
         
 class MultiLineGraph(Visualization):
@@ -786,7 +788,8 @@ class MultiLineGraph(Visualization):
             "title": self.title,
             "x_axis": self.x_axis,
             "y_axis": self.y_axis,
-            "y_axis_name": self.y_axis_name
+            "y_axis_name": self.y_axis_name,
+            "description": self.description
         }
         
 class Histogram(Visualization):
@@ -814,7 +817,8 @@ class Histogram(Visualization):
             "type": "histogram",
             "dataset": self.dataset,
             "title": self.title,
-            "value_column": self.value_column
+            "value_column": self.value_column,
+            "description": self.description
         }
         
 class StackedBarChart(Visualization):
@@ -843,7 +847,8 @@ class StackedBarChart(Visualization):
             "title": self.title,
             "value_column": self.value_column,
             "index_column": self.index_column,
-            "color_column": self.color_column
+            "color_column": self.color_column,
+            "description": self.description
         }
         
 class PipelineSchema:
