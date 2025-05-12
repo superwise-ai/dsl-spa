@@ -14,6 +14,14 @@ You will need a bearer token for the API to use for authentication
 BEARER_TOKEN=<bearer token>
 ```
 
+#### Superwise
+
+```
+BEARER_TOKEN=<bearer token>
+SUPERWISE_CLIENT_ID=<client_id>
+SUPERWISE_CLIENT_SECRET=<client_secret>
+```
+
 ### Connectors
 
 You will need a json file defining the connectors your dsl-spa pipelines will use.
