@@ -972,9 +972,9 @@ class BasicPipelineSchema(PipelineSchema):
         """Builds Datasets Schema
         """
         if len(self.datasets) > 0:
-            self.schema["datasets"] = {}
+            self.schema["datasets"] = []
         for dataset in self.datasets:
-            self.schema["datasets"][dataset.get_name()] = dataset.generate_schema()
+            self.schema["datasets"].append(dataset.generate_schema())
             
 class StandardPipelineSchema(BasicPipelineSchema):
     """Creates Schema for Standard Pipeline
