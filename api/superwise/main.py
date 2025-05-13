@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.middleware.cors import CORSMiddleware
-from data_objects import Pipeline, PipelineRequest, AskPipelineSummary, SelectPipelineVisualization, Filter
+from data_objects import PipelineDefinition, PipelineRequest, AskPipelineSummary, SelectPipelineVisualization, Filter
 from api_functions import answer_summary_question, select_visualization_name
 from random import randint
 from settings import Settings
@@ -102,7 +102,7 @@ def test():
     return {"message": "API Running"}
     
 @app.post("/create_pipeline", dependencies=[Depends(verify_token)])
-def create_pipeline(data: Pipeline):
+def create_pipeline(data: PipelineDefinition):
     try:
         pipeline = pipeline_type_dict[data.pipeline_type](data.pipeline_fields, data.pipeline_schema, connectors)
         pipeline_id = generate_pipeline_id(pipeline)
