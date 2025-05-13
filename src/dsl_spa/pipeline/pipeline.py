@@ -861,7 +861,8 @@ class BasicPipeline(Pipeline):
         visualizations = self.schema["visualizations"]
         for v in visualizations:
             self.add_variables_to_graph_titles(v)
-            vega_lite_dict = self.get_visualization_dict()
+            dataset = self.datasets[v["dataset"]]
+            vega_lite_dict = self.get_visualization_dict(visualization = v, dataset = dataset)
             title = v["title"]
             self.visualizations[title] = {
                 "vega_lite": vega_lite_dict,
