@@ -26,7 +26,7 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(bearer_sche
             detail="Invalid Bearer Token",
         )
         
-def generate_pipeline_id(pipeline):
+def generate_pipeline_id(pipeline) -> int:
     pipeline_id =  randint(10000000000,99999999999)
     while pipeline_id in pipelines.keys():
         pipeline_id =  randint(10000000000,99999999999)

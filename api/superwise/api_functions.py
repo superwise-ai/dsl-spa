@@ -5,7 +5,7 @@ from dsl_spa.pipeline.connector import Connector
 from dsl_spa.pipeline.pipeline_functions import pipeline_functions_dict
 from dsl_spa.pipeline.pipeline import StandardPipeline
 
-def ask_swe_application_via_api(sw: SuperwiseClient, app: str, user_input: str):
+def ask_swe_application_via_api(sw: SuperwiseClient, app: str, user_input: str) -> str:
     endpoint_url = f"https://api.superwise.ai/v1/app-worker/{app}/v1/ask"
     
     token = str(sw.application.get_by_id(_id=app).api_token)
@@ -34,7 +34,7 @@ def create_pipeline_from_schema(swe_application_id: str, prompt: str, pipeline_t
     pipeline_type = pipeline_type_dict[pipeline_name]
     return pipeline_type(pipeline_fields, pipeline_schema, connectors, pipeline_functions_dict)
 
-def answer_summary_question(summary: str, user_request: str, superwise_app_id: str, sw: SuperwiseClient):
+def answer_summary_question(summary: str, user_request: str, superwise_app_id: str, sw: SuperwiseClient) -> str:
     print(f"Querying Summary: {user_request}\n")
     
     swe_app_input = f"""Summary: {summary}
@@ -44,7 +44,7 @@ def answer_summary_question(summary: str, user_request: str, superwise_app_id: s
     
     return project_specific_response
 
-def select_visualization_name(visualizations: dict, user_request: str, superwise_app_id: str, sw: SuperwiseClient):
+def select_visualization_name(visualizations: dict, user_request: str, superwise_app_id: str, sw: SuperwiseClient) -> dict:
     swe_app_input = f"""List of Visualizations and their descriptions:
     """
     for title in visualizations.keys():
