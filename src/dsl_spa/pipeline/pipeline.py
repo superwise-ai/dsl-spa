@@ -55,14 +55,17 @@ class Pipeline:
             root (list, optional): List of field sections for this sub-section of fields. Defaults to [].
         """
         for key in fields_dict:
-            if isinstance(fields_dict[key], dict):
-                self.fill_categorical_values(fields_dict[key],root.append(key))
+            if not Pipeline.check_if_field_definition(fields_dict[key]):
+                if len(root) == 0:
+                    self.fill_categorical_values(fields_dict[key],[key])
+                else:
+                    self.fill_categorical_values(fields_dict[key],root + key)
             else:
-                for d in fields_dict[key]:
-                    field = ".".join(root+[key,d["name"]])
-                    if d["type"] == "categorical" and self.check_for_field(field):
-                        new_field = field+"_"+self.get_field(field)
-                        self.set_field(new_field,True)
+                d = fields_dict[key]
+                field = ".".join(root+[key])
+                if d["type"] == "categorical" and self.check_for_field(field):
+                    new_field = field+"_"+self.get_field(field)
+                    self.set_field(new_field,True)
 
     def populate_default_values(self):
         """Populates all fields with default values that have not been populated by the fields input to their respective default values.
@@ -140,25 +143,21 @@ class Pipeline:
         Returns:
             list: List of fields required for Pipeline to run
         """
-        if "required" in fields_dict.keys():
-            required = fields_dict["required"]
-            name = fields_dict["name"]
-            if required:
-                print(f"adding {root}.{name} as required field")
-                return [f"{root}.{name}"]
-            else:
-                return []
         fields_list = []
         for key in fields_dict.keys():
             if Pipeline.check_if_field_definition(fields_dict[key]):
-                for d in fields_dict[key]:
-                    if root == "":
-                        fields_list.extend(self.build_required_fields_list(d,root=f"{key}"))
-                    else:
-                        fields_list.extend(self.build_required_fields_list(d,root=f"{root}.{key}"))
-                        
+                d = fields_dict[key]
+                required = d["required"]
+                name = d["name"]
+                if required:
+                    return [f"{root}.{name}"]
+                else:
+                    return []
             else:
-                fields_list.extend(self.build_required_fields_list(fields_dict[key]),root=f"{root}.{key}")
+                if root == "":
+                    fields_list.extend(self.build_required_fields_list(fields_dict[key],root=f"{key}"))
+                else:
+                    fields_list.extend(self.build_required_fields_list(fields_dict[key]),root=f"{root}.{key}")
         return fields_list
                 
     def check_for_required_fields(self,required_fields: list):
@@ -287,10 +286,8 @@ class BasicPipeline(Pipeline):
             for field in field_list:
                 if not self.check_for_field(field):
                     has_required = False
-                    print(f"field {field} not found")
                     break
             if has_required:
-                print(field_list)
                 return True
         return False
         
@@ -432,8 +429,6 @@ class BasicPipeline(Pipeline):
                     sql_query = self.build_query(query)
                     self.run_query(query, sql_query)
                     self.validate_query_results(query)
-                    self.log.append(f"## Running {query_name}")
-                    self.log.append(f"{sql_query}")
                     
     def load_csvs(self):
         """Loads all the CSVs as defined in the csv schema
@@ -467,7 +462,6 @@ class BasicPipeline(Pipeline):
                 if "field" not in f.keys() or not self.check_for_field(f["field"]):
                     filters.append(f)
                     name = f["name"]
-                    print(f"Adding filter {name}")
             if len(filters) <= 0:
                 return
             for i in range(len(filters)):
@@ -562,7 +556,6 @@ class BasicPipeline(Pipeline):
         """
         query_name = process["name"]
         data = self.queries[query_name]
-        self.log.append(f"Loading data from query: {query_name}")
         return data
     
     def create_dataset_from_multiplexed_query(self, process: dict) -> pd.DataFrame:
@@ -579,7 +572,6 @@ class BasicPipeline(Pipeline):
                 data = self.queries[v]
                 query_name = v
                 break
-        self.log.append(f"Loading data from multiplexed query: {query_name}")
         return data
     
     def create_dataset_from_dataset(self, process: dict) -> pd.DataFrame:
@@ -593,7 +585,6 @@ class BasicPipeline(Pipeline):
         """
         previous_dataset_name = process["name"]
         data = self.datasets[previous_dataset_name]
-        self.log.append(f"Loading data from dataset: {previous_dataset_name}")
         return data
     
     def create_dataset_from_merge(self, process: dict) -> pd.DataFrame:
@@ -612,7 +603,6 @@ class BasicPipeline(Pipeline):
         data = pd.merge(df1, df2, how=process["how"], left_on=process["left_on"], right_on=process["right_on"])
         if "nan_replace" in process.keys():
             data = data.fillna(process["nan_replace"])
-        self.log.append(f"Mergine Datasets {dataset1_name} and {dataset2_name}")
         return data
     
     def apply_filters_to_dataset(self, data: pd.DataFrame, process: dict) -> pd.DataFrame:
@@ -634,9 +624,7 @@ class BasicPipeline(Pipeline):
             selected_value = data_filter["selected_value"]
             if not data_filter["include_any"] or selected_value != "Any":
                 if column_name in data.columns:
-                    unique_column_values = data[column_name].unique()
                     data = data[data[column_name] == selected_value]
-                    self.log.append(f"Applying filter {selected_value} on {column_name}")
         return data
     
     def apply_function_to_dataset(self, data: pd.DataFrame, process: dict) -> pd.DataFrame:
@@ -669,9 +657,8 @@ class BasicPipeline(Pipeline):
                     if self.check_for_field(v):
                         params[k] = self.get_field(v)
                     else:
-                        print(f"{v} field not found")
+                        pass
             data = func(**params)
-            self.log.append(f"Running function: {function_name}")
         return data
     
     def apply_arithmetic_operation_to_dataset(self, data: pd.DataFrame, process: dict) -> pd.DataFrame:
@@ -695,7 +682,6 @@ class BasicPipeline(Pipeline):
             data[column] = data[column] * float(by)
         elif operation == '/':
             data[column] = data[column] / float(by)
-        self.log.append(f"Applying arithmetic operation: {operation}{by} to {column}")
         return data
     
     def validate_function_should_run(self, process: dict) -> bool:
@@ -770,7 +756,6 @@ class BasicPipeline(Pipeline):
         
         self.load_summary_data_from_dataset(dataset)
 
-        self.log.append(f"## Building {dataset_name}")
 
         data = self.create_dataset(dataset)
         self.datasets[dataset_name] = data
