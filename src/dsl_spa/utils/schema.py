@@ -424,7 +424,7 @@ class SummaryDataset(Dataset):
         dataset_schema = super().generate_schema()
         if self.prefix is not None:
             dataset_schema["prefix"] = self.prefix
-        dataset_schema["summary"] = self.summary
+        dataset_schema["summarize"] = self.summary
         if self.suffix is not None:
             dataset_schema["suffix"] = self.suffix
         dataset_schema["remove_comma"] = self.remove_comma
