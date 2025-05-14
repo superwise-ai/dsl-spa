@@ -895,7 +895,8 @@ class BasicPipeline(Pipeline):
         else:
             raise ValueError(f"Visualization Type {visualization_type} is not supported.")
         if chart is None:
-            raise PipelineException(f"Failed to build Visualization {visualization["title"]}.")
+            title = visualization["title"]
+            raise PipelineException(f"Failed to build Visualization {title}.")
         return chart.to_dict()
     
     def draw_line_graph(self, visualization_dict: dict, dataset: pd.DataFrame) -> alt.Chart:
