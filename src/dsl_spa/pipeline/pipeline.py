@@ -892,8 +892,10 @@ class BasicPipeline(Pipeline):
             chart = self.draw_histogram(visualization,dataset)
         elif visualization_type == "stacked_bar":
             chart = self.draw_stacked_bar_chart(visualization,dataset)
-        if chart is None:
+        else:
             raise ValueError(f"Visualization Type {visualization_type} is not supported.")
+        if chart is None:
+            raise PipelineException(f"Failed to build Visualization {visualization["title"]}.")
         return chart.to_dict()
     
     def draw_line_graph(self, visualization_dict: dict, dataset: pd.DataFrame) -> alt.Chart:
