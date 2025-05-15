@@ -964,9 +964,9 @@ class BasicPipelineSchema(PipelineSchema):
         if self.filters is None:
             return
         if len(self.filters) > 0:
-            self.schema["filters"] = {}
-        for filter in self.filters:
-            self.schema["filters"][filter.get_name()] = filter.generate_schema()
+            self.schema["filters"] = []
+        for pipeline_filter in self.filters:
+            self.schema["filters"].append(pipeline_filter.generate_schema())
             
     def build_dataset_schema(self):
         """Builds Datasets Schema
