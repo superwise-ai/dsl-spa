@@ -223,7 +223,7 @@ class Filter(PipelineComponent):
         Returns:
             str: Filter Name
         """
-        return self.filter_name
+        return self.name
     
     def generate_schema(self):
         """Generates Schema for Pipeline Filter
