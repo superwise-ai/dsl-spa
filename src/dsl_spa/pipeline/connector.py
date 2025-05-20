@@ -34,7 +34,7 @@ class DatabaseConnector(Connector):
 class MSSQLConnector(DatabaseConnector):
     """Microsoft SQL Database Connector.
     """
-    def __init__(self, uid: str, password: str, host: str, database: str, driver: str):
+    def __init__(self, uid: str, password: str, host: str, database: str, param_dict: dict[str,str] = None):
         """Creates a Microsoft SQL Connector
 
         Args:
@@ -42,26 +42,35 @@ class MSSQLConnector(DatabaseConnector):
             password (str): Password
             host (str): Database Host Server
             database (str): Database Name
-            driver (str): Name of ODBC Driver
+            param_dict (dict[str,str]): Dictionary of other connection parameters for sqlalchemy to connect to MSSQL DB like driver, encrypt, TrustServerCertificate.
         """
         super().__init__()
         self.uid = uid
         self.password = password
         self.host = host
         self.database = database
-        self.driver = driver
+        self.param_dict = param_dict
         
     def connect(self):
         """Connects to the external connection
         """
-        connection_url = URL.create(
-            "mssql+pyodbc",
-            username=self.uid,
-            password=self.password,
-            host=self.host,
-            database=self.database,
-            query={"driver": self.driver},
-        )
+        if self.param_dict is not None:
+            connection_url = URL.create(
+                "mssql+pyodbc",
+                username=self.uid,
+                password=self.password,
+                host=self.host,
+                database=self.database,
+                query=self.param_dict
+            )
+        else:
+            connection_url = URL.create(
+                "mssql+pyodbc",
+                username=self.uid,
+                password=self.password,
+                host=self.host,
+                database=self.database
+            )
         self.engine = sa.create_engine(connection_url)
         
     def query(self, sql_query: str):
