@@ -871,7 +871,7 @@ class BasicPipeline(Pipeline):
             title = v["title"]
             self.visualizations[title] = {
                 "vega_lite": vega_lite_dict,
-                "description": v["description"]
+                "description": self.add_fields_to_clause(v["description"])
             }
     
     def get_visualization_dict(self, visualization: dict, dataset: pd.DataFrame) -> dict:
