@@ -73,6 +73,35 @@ class Pipeline:
         default_dict = Pipeline.get_default_values(self.schema["fields"])
         self.add_default_values(default_dict)
 
+    def get_default_values(field_dict: dict) -> dict:
+        """Retrieves all the default values from the schema.
+
+        Args:
+            field_dict (dict): Dictionary of fields.
+
+        Returns:
+            dict: Default values for each field based on the schema.
+        """
+        default_dict = {}
+        for key in field_dict.keys():
+            if Pipeline.check_if_field_definition(field_dict[key]):
+                d = field_dict[key]
+                if "default" in d.keys():
+                    if key == "base":
+                        default_dict[d["name"]] = d["default"]
+                    else:
+                        if key not in default_dict.keys():
+                            default_dict[key] = {}
+                        default_dict[d["name"]] = d["default"]
+            else:
+                if key == "base":
+                    base_default = Pipeline.get_default_values(field_dict[key])
+                    for k in base_default.keys():
+                        default_dict[k] = base_default[k]
+                else:
+                    default_dict[key] = Pipeline.get_default_values(field_dict[key])
+        return default_dict
+
     def add_default_values(self,default_dict: dict, root: list = []):
         """Given a dictionary of default values, populates the pipelines' field_dict with those values
 
@@ -108,30 +137,6 @@ class Pipeline:
             if field_name not in d.keys():
                 return False
         return True
-
-    def get_default_values(field_dict: dict) -> dict:
-        """Retrieves all the default values from the schema.
-
-        Args:
-            field_dict (dict): Dictionary of fields.
-
-        Returns:
-            dict: Default values for each field based on the schema.
-        """
-        default_dict = {}
-        for key in field_dict.keys():
-            if Pipeline.check_if_field_definition(field_dict[key]):
-                d = field_dict[key]
-                if "default" in d.keys():
-                    if key == "base":
-                        default_dict[d["name"]] = d["default"]
-                    else:
-                        if key not in default_dict.keys():
-                            default_dict[key] = {}
-                        default_dict[key][d["name"]] = d["default"]
-            else:
-                default_dict[key] = Pipeline.get_default_values(field_dict[key])
-        return default_dict
     
     def build_required_fields_list(self,fields_dict: dict, root: str = "") -> list:
         """Builds the list of required fields for a pipeline to run.
