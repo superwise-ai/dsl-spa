@@ -232,13 +232,13 @@ class BasicPipeline(Pipeline):
     """The BasicPipeline utilizes the Fields implemented in Pipeline and also implements queries, filters, datasets, dataset summarization, and visualizations.
     This Pipeline can be used as is, or implemented in a sub-class to generate streamlined pipelines for various use cases.
     """
-    def __init__(self,fields_input_dict: dict, json_schema: dict, connectors: list[Connector], functions: dict = pipeline_functions_dict):
+    def __init__(self,fields_input_dict: dict, json_schema: dict, connectors: dict[str,Connector], functions: dict = pipeline_functions_dict):
         """Creates a BasicPipeline
 
         Args:
             fields_input_dict (dict): Fields Input defining the fields for the pipeline
             json_schema (dict): The dictionary of the json schema defining the pipeline
-            connectors (list[Connector]): List of connectors
+            connectors (dict[str,Connector]): Dictionary mapping connector names to connectors
             functions (dict, optional): Dictionary mapping all function names to their functions. Defaults to pipeline_functions_dict.
         """
         super().__init__(fields_input_dict, json_schema, connectors)
@@ -1042,7 +1042,7 @@ class DashboardPipeline(StandardPipeline):
         Args:
             fields_input_dict (dict): Fields Input defining the fields for the pipeline
             json_schema (dict): The dictionary of the json schema defining the pipeline
-            connectors (list[Connector]): List of connectors
+            connectors (dict[str,Connector]): List of connectors
             functions (dict, optional): Dictionary mapping all function names to their functions. Defaults to pipeline_functions_dict.
         """
         super().__init__(fields_input_dict, json_schema, connectors, functions)
