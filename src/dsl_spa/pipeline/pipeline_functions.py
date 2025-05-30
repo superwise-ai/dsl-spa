@@ -18,7 +18,7 @@ def add_date_information(df: pd.DataFrame, year_field: str, quarter_field: str, 
         df = df.sort_values(by=[year_field,month_field])
     return df
 
-def build_time_series_counts(df,group_by: str, year_field: str, quarter_field: str, month_field: str, count_field: str, result_field: str, start_date: str = None, end_date: str = None) -> pd.DataFrame:
+def build_time_series_counts(df,group_by: str, year_field: str, quarter_field: str, month_field: str, count_field: str, result_field: str, start_date: str = None, end_date: str = None, date_field: str = "x") -> pd.DataFrame:
     """Creates counts of records based on group_by value.
 
     Args:
@@ -103,7 +103,7 @@ def build_time_series_counts(df,group_by: str, year_field: str, quarter_field: s
                     sum_count = sum(partial_data[count_field])
                 graph_data_x.append(f"{year}-{str(month).zfill(2)}")
                 graph_data_y.append(sum_count)
-    data = {'x': graph_data_x, result_field: graph_data_y}
+    data = {date_field: graph_data_x, result_field: graph_data_y}
     return pd.DataFrame.from_dict(data, orient = 'columns')
 
 def build_pie_graph(df: pd.DataFrame, index_field: str, value_field: str, label_field: str, count_field: str = None) -> pd.DataFrame:

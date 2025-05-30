@@ -768,7 +768,7 @@ class MultiLineGraph(Visualization):
             title (str): Line Graph Title
             description (str): Description of Line Graph
             x_axis (str): Column Name to use for x_axis
-            columns (list[str]): List of columns names to use for y_axis
+            columns (list[str]): List of column names to use for y_axis
             y_axis (str): Axis title for y_axis
         """
         super().__init__(dataset, title, description)

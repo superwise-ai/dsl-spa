@@ -25,13 +25,13 @@ class Pipeline:
     It supports default values, categorical values, implements other necessary functions for utilizing fields.
     """
     
-    def __init__(self,fields_input_dict: dict, json_schema: dict, connectors: list[Connector]):
+    def __init__(self,fields_input_dict: dict, json_schema: dict, connectors: dict[str,Connector]):
         """Creates a Pipeline
 
         Args:
             fields_input_dict (dict): Fields Input defining the fields for the pipeline
             json_schema (dict): The dictionary of the json schema defining the pipeline
-            connectors (list[Connector]): List of connectors
+            connectors (dict[str,Connector]): List of connectors
         """
         self.pipeline_name = json_schema["pipeline_name"]
         self.field_dict = fields_input_dict
