@@ -917,9 +917,10 @@ class BasicPipeline(Pipeline):
         x_axis = visualization_dict["x_axis"]
         y_axis = visualization_dict["y_axis"]
         title = visualization_dict["title"]
+        tooltip = True if "tooltip" not in visualization_dict else visualization_dict["tooltip"]
         if len(dataset.index) > 0:
             if isinstance(y_axis, str):
-                chart = alt.Chart(dataset, title=title).mark_line().encode(x=x_axis, y=y_axis)
+                chart = alt.Chart(dataset, title=title).mark_line(tooltip=tooltip).encode(x=x_axis, y=y_axis)
                 chart = chart.configure_title(orient='top', anchor='middle')
                 return chart
             else:
@@ -937,7 +938,7 @@ class BasicPipeline(Pipeline):
                     partial_data["label"] = label_values
                     partial_data = partial_data.rename(columns={x_axis: x_axis, "label": "label", column: y_axis_name})
                     data = pd.concat([data,partial_data])
-                chart = alt.Chart(data, title=title).mark_line().encode(x=x_axis, y=y_axis_name, color="label")
+                chart = alt.Chart(data, title=title).mark_line(tooltip=tooltip).encode(x=x_axis, y=y_axis_name, color="label")
                 chart = chart.configure_title(orient='top', anchor='middle')
                 return chart
         else:
@@ -956,8 +957,9 @@ class BasicPipeline(Pipeline):
         graph_title = visualization_dict["title"]
         value_column = visualization_dict["value_column"]
         label_column = visualization_dict["label_column"]
+        tooltip = True if "tooltip" not in visualization_dict else visualization_dict["tooltip"]
         if len(dataset.index) > 0:
-            chart = alt.Chart(dataset, title=graph_title).mark_arc().encode(theta=value_column,color=label_column)
+            chart = alt.Chart(dataset, title=graph_title).mark_arc(tooltip=tooltip).encode(theta=value_column,color=label_column)
             return chart
         else:
             return None
@@ -974,9 +976,10 @@ class BasicPipeline(Pipeline):
         """
         graph_title = visualization_dict["title"]
         value_column = visualization_dict["value_column"]
+        tooltip = True if "tooltip" not in visualization_dict else visualization_dict["tooltip"]
         if len(dataset.index) > 0:
             partial_data = dataset[[value_column]]
-            chart = alt.Chart(partial_data, title=graph_title).mark_bar().encode(alt.X(value_column, bin=True), y='count()')
+            chart = alt.Chart(partial_data, title=graph_title).mark_bar(tooltip=tooltip).encode(alt.X(value_column, bin=True), y='count()')
             return chart
         else:
             return None
@@ -995,8 +998,9 @@ class BasicPipeline(Pipeline):
         value_column = visualization_dict["value_column"]
         index_column = visualization_dict["index_column"]
         color_column = visualization_dict["color_column"]
+        tooltip = True if "tooltip" not in visualization_dict else visualization_dict["tooltip"]
         if len(dataset.index) > 0:
-            chart = alt.Chart(dataset, title=graph_title).mark_bar().encode(x=index_column,y=f"sum({value_column})",color=color_column)
+            chart = alt.Chart(dataset, title=graph_title).mark_bar(tooltip=tooltip).encode(x=index_column,y=f"sum({value_column})",color=color_column)
             return chart
         else:
             return None

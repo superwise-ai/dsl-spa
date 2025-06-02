@@ -681,7 +681,7 @@ class Summary(PipelineComponent):
 class Visualization(PipelineComponent):
     """Pipeline Visualization Definition
     """    
-    def __init__(self, dataset: Dataset, title: str, description: str):
+    def __init__(self, dataset: Dataset, title: str, description: str, tooltip: bool = True):
         """Creates Pipeline Visualization Definition
 
         Args:
@@ -692,11 +692,12 @@ class Visualization(PipelineComponent):
         self.dataset = dataset.get_name()
         self.title = title
         self.description = description
+        self.tooltip = tooltip
         
 class PieChart(Visualization):
     """Pipeline Pie Chart Definition
     """    
-    def __init__(self, dataset: Dataset, title: str, description: str, value_column: str, label_column: str):
+    def __init__(self, dataset: Dataset, title: str, description: str, value_column: str, label_column: str, tooltip: bool = True):
         """Creates Pipeline Pie Chart Defintion
 
         Args:
@@ -705,8 +706,9 @@ class PieChart(Visualization):
             description (str): Description of Pie Chart
             value_column (str): Name of column to that has the size of each pie slice
             label_column (str): Name of column to that has the name of each pie slice
+            tooltip (bool): Whether tooltips should be shown
         """
-        super().__init__(dataset, title, description)
+        super().__init__(dataset, title, description, tooltip)
         self.value_column = value_column
         self.label_column = label_column
         
@@ -722,13 +724,14 @@ class PieChart(Visualization):
             "title": self.title,
             "value_column": self.value_column,
             "label_column": self.label_column,
-            "description": self.description
+            "description": self.description,
+            "tooltip": self.tooltip
         }
         
 class LineGraph(Visualization):
     """Pipeline Line Graph Definition
     """    
-    def __init__(self, dataset: Dataset, title: str, description: str, x_axis: str, y_axis: str):
+    def __init__(self, dataset: Dataset, title: str, description: str, x_axis: str, y_axis: str, tooltip: bool = True):
         """Creates Pipeline Line Graph Defintion
 
         Args:
@@ -737,8 +740,9 @@ class LineGraph(Visualization):
             description (str): Description of Line Graph
             x_axis (str): Column Name to use for x_axis
             y_axis (str): Column Name to use for y_axis
+            tooltip (bool): Whether tooltips should be shown
         """
-        super().__init__(dataset, title, description)
+        super().__init__(dataset, title, description, tooltip)
         self.x_axis = x_axis
         self.y_axis = y_axis
         
@@ -754,13 +758,14 @@ class LineGraph(Visualization):
             "title": self.title,
             "x_axis": self.x_axis,
             "y_axis": self.y_axis,
-            "description": self.description
+            "description": self.description,
+            "tooltip": self.tooltip
         }
         
 class MultiLineGraph(Visualization):
     """Pipeline Multi-Line Graph Definition
     """    
-    def __init__(self, dataset: Dataset, title: str, description: str, x_axis: str, columns: list[str], y_axis: str):
+    def __init__(self, dataset: Dataset, title: str, description: str, x_axis: str, columns: list[str], y_axis: str, tooltip: bool = True):
         """Creates Pipeline Multi-Line Graph Defintion
 
         Args:
@@ -770,8 +775,9 @@ class MultiLineGraph(Visualization):
             x_axis (str): Column Name to use for x_axis
             columns (list[str]): List of column names to use for y_axis
             y_axis (str): Axis title for y_axis
+            tooltip (bool): Whether tooltips should be shown
         """
-        super().__init__(dataset, title, description)
+        super().__init__(dataset, title, description, tooltip)
         self.x_axis = x_axis
         self.y_axis = columns
         self.y_axis_name = y_axis
@@ -789,13 +795,14 @@ class MultiLineGraph(Visualization):
             "x_axis": self.x_axis,
             "y_axis": self.y_axis,
             "y_axis_name": self.y_axis_name,
-            "description": self.description
+            "description": self.description,
+            "tooltip": self.tooltip
         }
         
 class Histogram(Visualization):
     """Pipeline Histogram Definition
     """
-    def __init__(self, dataset: Dataset, title: str, description: str, value_column: str):
+    def __init__(self, dataset: Dataset, title: str, description: str, value_column: str, tooltip: bool = True):
         """Creates Pipeline Histogram Definition
 
         Args:
@@ -803,8 +810,9 @@ class Histogram(Visualization):
             title (str): Line Graph Title
             description (str): Description of Line Graph
             value_column (str): Column from dataset with values for histogram
+            tooltip (bool): Whether tooltips should be shown
         """
-        super().__init__(dataset, title, description)
+        super().__init__(dataset, title, description, tooltip)
         self.value_column = value_column
         
     def generate_schema(self):
@@ -818,13 +826,14 @@ class Histogram(Visualization):
             "dataset": self.dataset,
             "title": self.title,
             "value_column": self.value_column,
-            "description": self.description
+            "description": self.description,
+            "tooltip": self.tooltip
         }
         
 class StackedBarChart(Visualization):
     """Pipeline Stacked Bar Chart Definition
     """
-    def __init__(self, dataset: Dataset, title: str, description: str, value_column: str, index_column: str, color_column: str):
+    def __init__(self, dataset: Dataset, title: str, description: str, value_column: str, index_column: str, color_column: str, tooltip: bool = True):
         """Creates Pipeline Stacked Bar Chart Definition
 
         Args:
@@ -834,8 +843,9 @@ class StackedBarChart(Visualization):
             value_column (str): Name of column with stacked bar size
             index_column (str): Name of column with indexes for x_axis
             color_column (str): Name of column with label for each stacked bar
+            tooltip (bool): Whether tooltips should be shown
         """
-        super().__init__(dataset, title, description)
+        super().__init__(dataset, title, description, tooltip)
         self.value_column = value_column
         self.index_column = index_column
         self.color_column = color_column
@@ -848,7 +858,8 @@ class StackedBarChart(Visualization):
             "value_column": self.value_column,
             "index_column": self.index_column,
             "color_column": self.color_column,
-            "description": self.description
+            "description": self.description,
+            "tooltip": self.tooltip
         }
         
 class PipelineSchema:
