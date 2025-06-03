@@ -833,7 +833,7 @@ class Histogram(Visualization):
 class BarChart(Visualization):
     """Pipeline Bar Chart Definition
     """
-    def __init__(self, dataset: Dataset, title: str, description: str, value_column: str, index_column: str, color_column: str, tooltip: bool = True):
+    def __init__(self, dataset: Dataset, title: str, description: str, value_column: str, label_column: str, color_column: str, tooltip: bool = True):
         """Creates Pipeline Bar Chart Definition
 
         Args:
@@ -846,7 +846,7 @@ class BarChart(Visualization):
         """
         super().__init__(dataset, title, description, tooltip)
         self.value_column = value_column
-        self.index_column = index_column
+        self.label_column = label_column
         
     def generate_schema(self):
         return {
@@ -854,7 +854,7 @@ class BarChart(Visualization):
             "dataset": self.dataset,
             "title": self.title,
             "value_column": self.value_column,
-            "index_column": self.index_column,
+            "label_column": self.label_column,
             "description": self.description,
             "tooltip": self.tooltip
         }

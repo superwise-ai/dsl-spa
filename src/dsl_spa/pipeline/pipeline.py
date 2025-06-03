@@ -998,10 +998,10 @@ class BasicPipeline(Pipeline):
         """
         graph_title = visualization_dict["title"]
         value_column = visualization_dict["value_column"]
-        index_column = visualization_dict["index_column"]
+        label_column = visualization_dict["label_column"]
         tooltip = True if "tooltip" not in visualization_dict else visualization_dict["tooltip"]
         if len(dataset.index) > 0:
-            chart = alt.Chart(dataset, title=graph_title).mark_bar(tooltip=tooltip).encode(x=index_column,y=value_column)
+            chart = alt.Chart(dataset, title=graph_title).mark_bar(tooltip=tooltip).encode(x=label_column,y=value_column)
             return chart
         else:
             return None
