@@ -895,6 +895,8 @@ class BasicPipeline(Pipeline):
             chart = self.draw_pie_graph(visualization,dataset)
         elif visualization_type == "histogram":
             chart = self.draw_histogram(visualization,dataset)
+        elif visualization_type == "bar":
+            chart = self.draw_bar_chart(visualization,dataset)
         elif visualization_type == "stacked_bar":
             chart = self.draw_stacked_bar_chart(visualization,dataset)
         else:
@@ -980,6 +982,26 @@ class BasicPipeline(Pipeline):
         if len(dataset.index) > 0:
             partial_data = dataset[[value_column]]
             chart = alt.Chart(partial_data, title=graph_title).mark_bar(tooltip=tooltip).encode(alt.X(value_column, bin=True), y='count()')
+            return chart
+        else:
+            return None
+        
+    def draw_bar_chart(self, visualization_dict: dict, dataset: pd.DataFrame) -> alt.Chart:
+        """Draws stacked bar chart
+
+        Args:
+            visualization (dict): Visualization dict
+            dataset (pd.DataFrame): Dataset to build visualization with
+            
+        Returns:
+            alt.Chart: Altair Stacked Bar Chart
+        """
+        graph_title = visualization_dict["title"]
+        value_column = visualization_dict["value_column"]
+        index_column = visualization_dict["index_column"]
+        tooltip = True if "tooltip" not in visualization_dict else visualization_dict["tooltip"]
+        if len(dataset.index) > 0:
+            chart = alt.Chart(dataset, title=graph_title).mark_bar(tooltip=tooltip).encode(x=index_column,y=value_column)
             return chart
         else:
             return None

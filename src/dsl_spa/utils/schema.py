@@ -830,6 +830,35 @@ class Histogram(Visualization):
             "tooltip": self.tooltip
         }
         
+class BarChart(Visualization):
+    """Pipeline Bar Chart Definition
+    """
+    def __init__(self, dataset: Dataset, title: str, description: str, value_column: str, index_column: str, color_column: str, tooltip: bool = True):
+        """Creates Pipeline Bar Chart Definition
+
+        Args:
+            dataset (Dataset): Dataset to visualize
+            title (str): Line Graph Title
+            description (str): Description of Line Graph
+            value_column (str): Name of column with stacked bar size
+            index_column (str): Name of column with indexes for x_axis
+            tooltip (bool): Whether tooltips should be shown
+        """
+        super().__init__(dataset, title, description, tooltip)
+        self.value_column = value_column
+        self.index_column = index_column
+        
+    def generate_schema(self):
+        return {
+            "type": "bar",
+            "dataset": self.dataset,
+            "title": self.title,
+            "value_column": self.value_column,
+            "index_column": self.index_column,
+            "description": self.description,
+            "tooltip": self.tooltip
+        }
+        
 class StackedBarChart(Visualization):
     """Pipeline Stacked Bar Chart Definition
     """
