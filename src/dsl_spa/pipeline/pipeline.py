@@ -929,6 +929,7 @@ class BasicPipeline(Pipeline):
                 color_column = visualization_dict["color_column"]
                 chart = alt.Chart(dataset, title=title).mark_line(tooltip=tooltip).encode(x=x_axis, y=y_axis, color=color_column)
                 chart = chart.configure_title(orient='top', anchor='middle')
+                return chart
             else:
                 y_axis_name = visualization_dict["y_axis_name"] if "y_axis_name" in visualization_dict.keys() else "count"
                 column = y_axis[0]
