@@ -921,10 +921,14 @@ class BasicPipeline(Pipeline):
         title = visualization_dict["title"]
         tooltip = True if "tooltip" not in visualization_dict else visualization_dict["tooltip"]
         if len(dataset.index) > 0:
-            if isinstance(y_axis, str):
+            if isinstance(y_axis, str) and "color_column" not in visualization_dict.keys():
                 chart = alt.Chart(dataset, title=title).mark_line(tooltip=tooltip).encode(x=x_axis, y=y_axis)
                 chart = chart.configure_title(orient='top', anchor='middle')
                 return chart
+            elif "color_column" in visualization_dict.keys():
+                color_column = visualization_dict["color_column"]
+                chart = alt.Chart(dataset, title=title).mark_line(tooltip=tooltip).encode(x=x_axis, y=y_axis, color=color_column)
+                chart = chart.configure_title(orient='top', anchor='middle')
             else:
                 y_axis_name = visualization_dict["y_axis_name"] if "y_axis_name" in visualization_dict.keys() else "count"
                 column = y_axis[0]

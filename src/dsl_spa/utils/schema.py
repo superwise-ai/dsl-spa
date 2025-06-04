@@ -761,9 +761,45 @@ class LineGraph(Visualization):
             "description": self.description,
             "tooltip": self.tooltip
         }
-        
+
 class MultiLineGraph(Visualization):
-    """Pipeline Multi-Line Graph Definition
+    """Pipeline Multi Line Graph Definition. Use if one column are y-values and one column indicates which line the y-value is a part of.
+    """    
+    def __init__(self, dataset: Dataset, title: str, description: str, x_axis: str, y_axis: str, color_column: str, tooltip: bool = True):
+        """Creates Pipeline Multi Line Graph Defintion
+
+        Args:
+            dataset (Dataset): Dataset to visualize
+            title (str): Line Graph Title
+            description (str): Description of Line Graph
+            x_axis (str): Column Name to use for x_axis
+            y_axis (str): Column Name to use for y_axis
+            tooltip (bool): Whether tooltips should be shown
+        """
+        super().__init__(dataset, title, description, tooltip)
+        self.x_axis = x_axis
+        self.y_axis = y_axis
+        self.color_column = color_column
+        
+    def generate_schema(self):
+        """Generates Schema for Pipeline Multi Line Graph
+
+        Returns:
+            dict: Dictionary defining Pipeline Multi Line Graph
+        """
+        return {
+            "type": "line",
+            "dataset": self.dataset,
+            "title": self.title,
+            "x_axis": self.x_axis,
+            "y_axis": self.y_axis,
+            "color_column": self.color_column,
+            "description": self.description,
+            "tooltip": self.tooltip
+        }
+        
+class MultiColumnLineGraph(Visualization):
+    """Pipeline Multi-Column Line Graph Definition. Use if each column should be a line.
     """    
     def __init__(self, dataset: Dataset, title: str, description: str, x_axis: str, columns: list[str], y_axis: str, tooltip: bool = True):
         """Creates Pipeline Multi-Line Graph Defintion
