@@ -399,7 +399,7 @@ class Dataset(PipelineComponent):
 class SummaryDataset(Dataset):
     """Pipeline Summary Dataset Definition
     """
-    def __init__(self, dataset_name: str, summary_by_row: str, summary_prefix: str = None, summary_suffix: str = None, remove_comma: bool = False):
+    def __init__(self, dataset_name: str, summary_by_row: str, summary_prefix: str = None, summary_suffix: str = None, remove_comma: bool = False, empty_summary: str = None):
         """Creates Pipeline Summary Dataset Definition
 
         Args:
@@ -408,12 +408,14 @@ class SummaryDataset(Dataset):
             summary_prefix (str, optional): Prefix for summary statements. Defaults to None.
             summary_suffix (str, optional): Suffix for summary satements. Defaults to None.
             remove_comma (bool, optional): Whether to remove a potential last comma after the last row summary is created. Defaults to False.
+            empty_summary (str, optional): Summary to put in place when dataset is empty. Defaults to None.
         """
         super().__init__(dataset_name)
         self.prefix = summary_prefix
         self.summary = summary_by_row
         self.suffix = summary_suffix
         self.remove_comma = remove_comma
+        self.empty_summary = empty_summary
         
     def generate_schema(self):
         """Generates Schema for Pipeline Dataset
@@ -428,6 +430,8 @@ class SummaryDataset(Dataset):
         if self.suffix is not None:
             dataset_schema["suffix"] = self.suffix
         dataset_schema["remove_comma"] = self.remove_comma
+        if self.empty_dataset is None:
+            dataset_schema["empty_summary"] = self.empty_summary
         return dataset_schema
     
 class AdvancedDataset(SummaryDataset):

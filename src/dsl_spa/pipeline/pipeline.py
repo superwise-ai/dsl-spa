@@ -253,6 +253,7 @@ class BasicPipeline(Pipeline):
         self.dataset_summary_prefixes = {}
         self.dataset_summary_suffixes = {}
         self.dataset_summary_remove_commas = {}
+        self.empty_dataset_summary = {}
         self.functions = functions
         self.visualizations = {}
         self.filters = None
@@ -549,6 +550,8 @@ class BasicPipeline(Pipeline):
             self.dataset_summary_suffixes[dataset_name] = dataset["suffix"]
         if "remove_comma" in dataset.keys():
             self.dataset_summary_remove_commas[dataset_name] = dataset["remove_comma"]
+        if "empty_summary" in dataset.keys():
+            self.empty_dataset_summary[dataset_name] = dataset["empty_summary"]
     
     def create_dataset_from_query(self, process: dict) -> pd.DataFrame:
         """Creates dataset from query
@@ -790,25 +793,29 @@ class BasicPipeline(Pipeline):
             str: Summary of dataset
         """
         dataset = self.datasets[dataset_name]
-        summary_clause = self.dataset_summary_clauses[dataset_name]        
-        summary = ""
-        
-        if dataset_name in self.dataset_summary_prefixes.keys():
-            summary += self.add_fields_to_clause(self.dataset_summary_prefixes[dataset_name])
-        
-        for i,row in dataset.iterrows():
-            clause = self.add_columns_to_clause(summary_clause,row)
-            summary += clause
-        
-        if dataset_name in self.dataset_summary_remove_commas.keys() and self.dataset_summary_remove_commas[dataset_name]:
-            if summary[-1] == ',':
-                summary = summary[:-1]
-            elif summary[-2:] == ', ':
-                summary = summary[:-2]
-        
-        if dataset_name in self.dataset_summary_suffixes.keys():
-            summary += self.add_fields_to_clause(self.dataset_summary_suffixes[dataset_name])
+        if len(dataset) > 0:
+            summary_clause = self.dataset_summary_clauses[dataset_name]        
+            summary = ""
             
+            if dataset_name in self.dataset_summary_prefixes.keys():
+                summary += self.add_fields_to_clause(self.dataset_summary_prefixes[dataset_name])
+            
+            for i,row in dataset.iterrows():
+                clause = self.add_columns_to_clause(summary_clause,row)
+                summary += clause
+            
+            if dataset_name in self.dataset_summary_remove_commas.keys() and self.dataset_summary_remove_commas[dataset_name]:
+                if summary[-1] == ',':
+                    summary = summary[:-1]
+                elif summary[-2:] == ', ':
+                    summary = summary[:-2]
+            
+            if dataset_name in self.dataset_summary_suffixes.keys():
+                summary += self.add_fields_to_clause(self.dataset_summary_suffixes[dataset_name])
+        elif dataset_name in self.empty_dataset_summary.keys():
+            summary = self.empty_dataset_summary[dataset_name]
+        else:
+            summary = ""
         return summary
     
     def build_summary(self):
