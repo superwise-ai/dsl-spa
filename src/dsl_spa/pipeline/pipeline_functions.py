@@ -13,6 +13,8 @@ def add_date_information(df: pd.DataFrame, year_field: str, quarter_field: str, 
     Returns:
         pd.DataFrame: Output dataframe
     """
+    if len(df) <= 0:
+        return df
     df[quarter_field] = df[month_field].apply(lambda x: (x-1)//3 + 1)
     if sort_by_date:
         df = df.sort_values(by=[year_field,month_field])
@@ -22,7 +24,7 @@ def build_time_series_counts(df,group_by: str, year_field: str, quarter_field: s
     """Creates counts of records based on group_by value.
 
     Args:
-        df (_type_): Input dataframe
+        df (pd.DataFrame): Input dataframe
         group_by (str): The aggregation to group data by. Must be year, quarter, or month.
         year_field (str): Name of year column
         quarter_field (str): Name of quarter column
@@ -35,6 +37,8 @@ def build_time_series_counts(df,group_by: str, year_field: str, quarter_field: s
     Returns:
         pd.DataFrame: Output
     """
+    if len(df) <= 0:
+        return df
     if start_date is None:
         first_year = df[year_field].values[0]
         first_quarter = df[quarter_field].values[0]
@@ -119,6 +123,8 @@ def build_pie_graph(df: pd.DataFrame, index_field: str, value_field: str, label_
     Returns:
         pd.DataFrame: A dataframe with two columns <label_field> and <value_field>
     """
+    if len(df) <= 0:
+        return df
     indexes = df[index_field].unique()
     data = []
     for code in indexes:
@@ -142,6 +148,8 @@ def build_stacked_bar_graph_from_data_columns(df: pd.DataFrame, index_field, dat
     Returns:
         pd.DataFrame: A dataframe with three columns, <index_field>, <value_field>, and <color_field>
     """
+    if len(df) <= 0:
+        return df
     data = []
     for data_field in data_fields:
         for i,row in df.iterrows():
@@ -166,6 +174,8 @@ def filtered_arithmetic_column_operation(df: pd.DataFrame, column: str, operator
     Returns:
         pd.DataFrame: Output dataframe
     """
+    if len(df) <= 0:
+        return df
     df_where_equals = df[df[where_column].astype(str) == where_value]
     df_where_not_equals = df[df[where_column].astype(str) != where_value]
     if operator == "+":
@@ -192,6 +202,8 @@ def arithmetic_combine_column(df: pd.DataFrame, col1: str, col2: str, new_column
     Returns:
         pd.DataFrame: Output dataframe
     """
+    if len(df) <= 0:
+        return df
     new_values = []
     col1_values = df[col1].values
     col2_values = df[col2].values
