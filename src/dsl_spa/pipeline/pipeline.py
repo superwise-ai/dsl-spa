@@ -431,7 +431,6 @@ class BasicPipeline(Pipeline):
             for query in self.schema["queries"]:
                 query_validated = self.validate_query_input(query)
                 if query_validated:
-                    query_name = query["name"]
                     sql_query = self.build_query(query)
                     self.run_query(query, sql_query)
                     self.validate_query_results(query)
