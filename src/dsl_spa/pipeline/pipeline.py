@@ -812,7 +812,7 @@ class BasicPipeline(Pipeline):
             if dataset_name in self.dataset_summary_suffixes.keys():
                 summary += self.add_fields_to_clause(self.dataset_summary_suffixes[dataset_name])
         elif dataset_name in self.empty_dataset_summary.keys():
-            summary = self.empty_dataset_summary[dataset_name]
+            summary = self.add_fields_to_clause(self.empty_dataset_summary[dataset_name])
         else:
             summary = ""
         return summary
