@@ -240,17 +240,30 @@ def replace_value_in_column(df: pd.DataFrame, column: str, old_value, new_value)
     return df
 
 def filter_by_value(df: pd.DataFrame, column: str, value) -> pd.DataFrame:
-    """Filters df rows where the column is value.
+    """Filters df to only rows where the column is value.
 
     Args:
         df (pd.DataFrame): Input dataframe
         column (str): Name of column to search for value
-        value (_type_): Value to filter by
+        value (Any): Value to filter by
 
     Returns:
         pd.DataFrame: Output dataframe
     """
     return df[df[column] == value]
+
+def remove_by_value(df: pd.DataFrame, column: str, value) -> pd.DataFrame:
+    """Removes df rows where the column is value.
+
+    Args:
+        df (pd.DataFrame): Input dataframe
+        column (str): Name of column to search for value
+        value (Any): Value to remove by
+
+    Returns:
+        pd.DataFrame: Output dataframe
+    """
+    return df[df[column] != value]
 
 def value_counts(df: pd.DataFrame, column: str, column_name: str = "count") -> pd.DataFrame:
     """Generates the pandas value_counts for a given column
@@ -290,6 +303,7 @@ pipeline_functions_dict = {
     "arithmetic_combine_column": arithmetic_combine_column,
     "replace": replace_value_in_column,
     "filter_by_value": filter_by_value,
+    "remove_by_value": remove_by_value,
     "value_counts": value_counts,
     "sort_values": sort_values
 }
