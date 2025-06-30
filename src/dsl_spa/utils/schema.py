@@ -657,13 +657,17 @@ class AdvancedDataset(SummaryDataset):
 class Summary(PipelineComponent):
     """Pipeline Summary Definition
     """
-    def __init__(self, datasets: list[SummaryDataset]):
+    def __init__(self, datasets: list[SummaryDataset], prefix = None, suffix = None):
         """Creates Pipeline Summary Definition
 
         Args:
             datasets (list[SummaryDataset]): List of datasets to build summary from
+            prefix (str): Text for the prefix of the summary
+            suffix (str): Text for the suffix of the summary
         """
         self.datasets = datasets
+        self.prefix = prefix
+        self.suffix = suffix
         
     def generate_schema(self):
         """Generates Schema for Pipeline Summary
@@ -679,6 +683,12 @@ class Summary(PipelineComponent):
         }        
         for dataset in self.datasets:
             summary_schema["datasets"].append(dataset.get_name())
+            
+        if self.prefix is not None:
+            summary_schema["prefix"] = self.prefix
+            
+        if self.suffix is not None:
+            summary_schema["suffix"] = self.suffix
         
         return summary_schema
         
