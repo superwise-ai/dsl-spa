@@ -430,7 +430,7 @@ class SummaryDataset(Dataset):
         if self.suffix is not None:
             dataset_schema["suffix"] = self.suffix
         dataset_schema["remove_comma"] = self.remove_comma
-        if self.empty_dataset is None:
+        if self.empty_dataset is not None:
             dataset_schema["empty_summary"] = self.empty_dataset
         return dataset_schema
     
