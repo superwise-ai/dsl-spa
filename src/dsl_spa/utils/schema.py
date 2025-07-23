@@ -564,13 +564,14 @@ class AdvancedDataset(SummaryDataset):
             if exclude_fields is not None:
                 self.create_schema["exclude_fields"] = exclude_fields
         
-    def add_function(self, function_name: str, function_fields_dict: dict = None, function_params_dict: dict = None, required_fields: list[list[str]] = None, exclude_fields: list[list[str]] = None):
+    def add_function(self, function_name: str, function_fields_dict: dict = None, function_params_dict: dict = None, function_environment_variables_dict: dict = None, required_fields: list[list[str]] = None, exclude_fields: list[list[str]] = None):
         """Adds function to Dataset Operations
 
         Args:
             function_name (str): Name of function in Pipelines functions dict
             function_fields_dict (dict, optional): Dictionary of Fields to map to parameters for the function. If None is excluded from schema. Defaults to None.
             function_params_dict (dict, optional): Dictionary of static parameters to map to parameters for the function. If None is excluded from schema. Defaults to None.
+            function_environment_variables_dict (dict, optional): Dictionary of environment variables to map to parameters for the function. If None is excluded from schema. Defaults to None.
             required_fields (list[list[str]], optional): Fields Required to run query. If None is excluded. Defaults to None.
             exclude_fields (list[list[str]], optional): Fields that would indicate to exclude running the query. If None is excluded. Defaults to None.
         """
@@ -584,6 +585,9 @@ class AdvancedDataset(SummaryDataset):
             
         if function_params_dict is not None:
             function_dict["params"] = function_params_dict
+        
+        if function_params_dict is not None:
+            function_dict["environment"] = function_environment_variables_dict
             
         if required_fields is not None:
             function_dict["required_fields"] = required_fields

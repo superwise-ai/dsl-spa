@@ -3,6 +3,7 @@ from dsl_spa.pipeline.pipeline_functions import pipeline_functions_dict
 from dsl_spa.pipeline.connector import Connector
 import altair as alt
 from typing import Any
+import os
 
 class PipelineException(Exception):
     """Pipeline Exception. A PipelineException is created when an error is generated based on the provided schema.
@@ -665,6 +666,11 @@ class BasicPipeline(Pipeline):
                         params[k] = self.get_field(v)
                     else:
                         pass
+            if "environment" in process.keys():
+                for k,v in process["params"].items():
+                    if isinstance(v,str):
+                        v = self.add_fields_to_clause(v)
+                    params[k] = os.environ[v]
             data = func(**params)
         return data
     
