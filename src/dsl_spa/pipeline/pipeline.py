@@ -276,9 +276,11 @@ class BasicPipeline(Pipeline):
             field = clause[start+1:end]
             if self.check_for_field(field):
                 value = self.get_field(field)
-            if sanitize_for_sql and isinstance(value,str):
-                value = self.sanitize_field_for_sql_query(value)
-            clause = clause[:start] + str(value) + clause[end+1:]
+                if sanitize_for_sql and isinstance(value,str):
+                    value = self.sanitize_field_for_sql_query(value)
+                clause = clause[:start] + str(value) + clause[end+1:]
+            if end == -1:
+                break
             index = end+1
         return clause
     
