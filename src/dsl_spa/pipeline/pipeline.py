@@ -269,14 +269,17 @@ class BasicPipeline(Pipeline):
         Returns:
             str: Clause with fields replaced with their value.
         """
-        while '{' in clause:
-            start = clause.find('{')
-            end = clause.find('}')
+        index = 0
+        while '{' in clause[index:]:
+            start = clause.find('{', start = index)
+            end = clause.find('}', start = index)
             field = clause[start+1:end]
-            value = self.get_field(field)
+            if self.check_for_field(field):
+                value = self.get_field(field)
             if sanitize_for_sql and isinstance(value,str):
                 value = self.sanitize_field_for_sql_query(value)
             clause = clause[:start] + str(value) + clause[end+1:]
+            index = end+1
         return clause
     
     def has_required_fields(self,required_fields: list[list[str]]) -> bool:
@@ -645,33 +648,28 @@ class BasicPipeline(Pipeline):
         Returns:
             pd.DataFrame: Dataset with function applied to it
         """
-        check = True
-        if "required_fields" in process.keys():
-            for field_name in process["required_fields"]:
-                check = check and self.check_for_field(field_name)
-        if check:
-            function_name = process["name"]
-            func = self.functions[function_name]
-            params = {
-                "df": data
-            }
-            if "params" in process.keys():
-                for k,v in process["params"].items():
-                    if isinstance(v,str):
-                        v = self.add_fields_to_clause(v)
-                    params[k] = v
-            if "fields" in process.keys():
-                for k,v in process["fields"].items():
-                    if self.check_for_field(v):
-                        params[k] = self.get_field(v)
-                    else:
-                        pass
-            if "environment" in process.keys():
-                for k,v in process["params"].items():
-                    if isinstance(v,str):
-                        v = self.add_fields_to_clause(v)
-                    params[k] = os.environ[v]
-            data = func(**params)
+        function_name = process["name"]
+        func = self.functions[function_name]
+        params = {
+            "df": data
+        }
+        if "params" in process.keys():
+            for k,v in process["params"].items():
+                if isinstance(v,str):
+                    v = self.add_fields_to_clause(v)
+                params[k] = v
+        if "fields" in process.keys():
+            for k,v in process["fields"].items():
+                if self.check_for_field(v):
+                    params[k] = self.get_field(v)
+                else:
+                    pass
+        if "environment" in process.keys():
+            for k,v in process["params"].items():
+                if isinstance(v,str):
+                    v = self.add_fields_to_clause(v)
+                params[k] = os.environ[v]
+        data = func(**params)
         return data
     
     def apply_arithmetic_operation_to_dataset(self, data: pd.DataFrame, process: dict) -> pd.DataFrame:
