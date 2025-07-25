@@ -672,7 +672,7 @@ class BasicPipeline(Pipeline):
         """
         function_name = process["name"]
         func = self.functions[function_name]
-        params = self.get_function_parameters(process)
+        params = self.get_function_parameters(data, process)
         data = func(**params)
         return data
     
