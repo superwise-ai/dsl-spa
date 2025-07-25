@@ -271,8 +271,8 @@ class BasicPipeline(Pipeline):
         """
         index = 0
         while '{' in clause[index:]:
-            start = clause.find('{', start = index)
-            end = clause.find('}', start = index)
+            start = clause.find('{', index)
+            end = clause.find('}', index)
             field = clause[start+1:end]
             if self.check_for_field(field):
                 value = self.get_field(field)
