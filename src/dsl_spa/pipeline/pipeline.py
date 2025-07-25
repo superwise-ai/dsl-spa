@@ -654,7 +654,7 @@ class BasicPipeline(Pipeline):
                 else:
                     pass
         if "environment" in process.keys():
-            for k,v in process["params"].items():
+            for k,v in process["environment"].items():
                 if isinstance(v,str):
                     v = self.add_fields_to_clause(v)
                 params[k] = os.environ[v]
