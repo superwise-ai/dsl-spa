@@ -638,18 +638,7 @@ class BasicPipeline(Pipeline):
                     data = data[data[column_name] == selected_value]
         return data
     
-    def apply_function_to_dataset(self, data: pd.DataFrame, process: dict) -> pd.DataFrame:
-        """Applies function with parameters and fields as defined in schema to dataset
-
-        Args:
-            data (pd.DataFrame): Dataset to apply function to
-            process (dict): Specific dataset dict definition from the schema
-
-        Returns:
-            pd.DataFrame: Dataset with function applied to it
-        """
-        function_name = process["name"]
-        func = self.functions[function_name]
+    def get_function_parameters(self, data:pd.DataFrame, process: dict):
         params = {
             "df": data
         }
@@ -669,6 +658,21 @@ class BasicPipeline(Pipeline):
                 if isinstance(v,str):
                     v = self.add_fields_to_clause(v)
                 params[k] = os.environ[v]
+        return params
+    
+    def apply_function_to_dataset(self, data: pd.DataFrame, process: dict) -> pd.DataFrame:
+        """Applies function with parameters and fields as defined in schema to dataset
+
+        Args:
+            data (pd.DataFrame): Dataset to apply function to
+            process (dict): Specific dataset dict definition from the schema
+
+        Returns:
+            pd.DataFrame: Dataset with function applied to it
+        """
+        function_name = process["name"]
+        func = self.functions[function_name]
+        params = self.get_function_parameters(process)
         data = func(**params)
         return data
     
