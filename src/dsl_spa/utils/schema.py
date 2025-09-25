@@ -434,6 +434,30 @@ class SummaryDataset(Dataset):
             dataset_schema["empty_summary"] = self.empty_dataset
         return dataset_schema
     
+class SemanticCacheDataset(Dataset):
+    
+    def add_cleanse_cache(self):
+        self.operations.append({
+            "type": "cleanse_cache"
+        })
+        
+    def add_open_ai_make_cache_comparisons(self, input_field_name: str, open_ai_api_key: str, open_ai_base_url: str = None, open_api_model_name: str = None, similarity_minimum: float = None) -> None:
+        operation = {
+            "type": "cleanse_cache",
+            "params": {
+                "field_name": input_field_name,
+                "similarity_minimum": open_ai_api_key
+            }
+        }
+        if open_ai_base_url is not None:
+            operation["openai_api_base"] = open_ai_base_url
+        if open_api_model_name is not None:
+            operation["model"] = open_api_model_name
+        if similarity_minimum is not None:
+            operation["similarity_minimum"] = similarity_minimum
+        
+        self.operations.append(operation)
+    
 class AdvancedDataset(SummaryDataset):
     """Pipeline Advanced Dataset Definition
     """
@@ -1121,7 +1145,7 @@ class DashboardPipelineSchema(StandardPipelineSchema):
     """Creates Schema for Dashboard Pipeline
     """
     def __init__(self, pipeline_name: str, fields: list[PipelineField], queries: list[SQLQuery], csvs: list[CSV], filters: list[Filter], datasets: list[Dataset], scope: str, scope_description: str, summary: Summary = None, visualizations: list[Visualization] = None):
-        """_summary_
+        """Creates Schema for Dashboard Pipeline
 
         Args:
             pipeline_name (str): Pipeline Name
@@ -1143,3 +1167,42 @@ class DashboardPipelineSchema(StandardPipelineSchema):
         """
         super().build_pipeline_schema()
         super().build_filters_schema()
+        
+class SemanticCachePipelineSchema(BasicPipelineSchema):
+    """Creates Schema for Semantic Cache Pipeline
+    """
+    def __init__(self, pipeline_name: str, fields: list[PipelineField], queries: list[SQLQuery], csvs: list[CSV], datasets: list[Dataset], semantic_cache_dataset: str, results_columns: list[str], empty_cache_error_message: str = None):
+        """Creates Schema for Semantic Cache Pipeline
+
+        Args:
+            pipeline_name (str): Pipeline Name
+            fields (list[PipelineField]): List of fields for pipeline
+            queries (list[SQLQuery]): List of SQL Queries for pipeline
+            csvs (list[CSV]): List of CSVs for Pipeline
+            datasets (list[Dataset]): List of Datasets for pipeline
+            semantic_cache_dataset (str): Name of dataset housing semantic cache
+            results_columns (list[str]): Name of Columns to be output from semantic cache when getting results
+            empty_cache_error_message (str, optional): Error message to throw when the semantic cache is empty after processing. Defaults to None.
+        """
+        super().__init__(pipeline_name, fields, queries, csvs, datasets)
+        self.semantic_cache_dataset = semantic_cache_dataset
+        self.results_columns = results_columns
+        self.empty_cache_error_message = empty_cache_error_message
+        
+    def build_pipeline_schema(self):
+        """Builds Semantic Cache Pipeline Schema
+        """
+        super().build_pipeline_schema()
+        self.build_semantic_cache_schema()
+        
+    def build_semantic_cache_schema(self):
+        """Builds Semantic Cache Schema
+        """
+        super().build_pipeline_schema()
+        semantic_cache_schema = {
+            "dataset": self.semantic_cache_dataset,
+            "results_columns": self.results_columns
+        }
+        if self.empty_cache_error_message is not None:
+            semantic_cache_schema["empty_cache_error_message"] = self.empty_cache_error_message
+        self.schema["semantic_cache"] = semantic_cache_schema
