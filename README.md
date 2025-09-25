@@ -29,3 +29,5 @@ from dsl_spa.pipeline.pipeline import StandardPipeline
 ```
 
 For more details on constructing a pipeline, reference [Building a Pipeline](https://github.com/superwise-ai/dsl-spa/blob/main/docs/Creating_a_Pipeline_Schema.md).
+
+For more details on the flow of Semantic Caching using DSL-SPA, refer to [Semantic Cache Flow](https://github.com/superwise-ai/dsl-spa/blob/main/docs/semantic_caching_flow.jpg)
