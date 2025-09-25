@@ -633,7 +633,7 @@ dataset.generate_schema()
 ### Generating With Utils
 
 ```
-from dsl_spa.utils.schema import PipelineField, SQLQuery, CSV, Filter, Dataset, StandardPipeline
+from dsl_spa.utils.schema import PipelineField, SQLQuery, CSV, Filter, Dataset, StandardPipelineSchema
 
 # Define Fields
 customer_name = Field(field_name = "customer_name", field_type = "string", required = True, description = "Name of the Customer")
@@ -684,6 +684,6 @@ datasets = [query_dataset, left_dataset, right_dataset, merged_dataset]
 # Define Standard Pipeline
 scope = "Example of a Pipeline"
 scope_description = "Simple example of a pipeline for loading customer data through queries and csvs"
-pipeline = StandardPipeline(pipeline_name = "Example Pipeline", fields = fields, queries = queries, csvs = csvs, datasets = datasets, scope = scope, "scope_description" = scope_description)
+pipeline = StandardPipelineSchema(pipeline_name = "Example Pipeline", fields = fields, queries = queries, csvs = csvs, datasets = datasets, scope = scope, "scope_description" = scope_description)
 schema = pipeline.get_schema()
 ```
