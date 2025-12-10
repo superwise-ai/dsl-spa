@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Union
 
 class PipelineComponent:
     """Base PipelineComponent class.
@@ -969,6 +969,111 @@ class StackedBarChart(Visualization):
             "tooltip": self.tooltip
         }
         
+class Command(PipelineComponent):
+    """Base class for generating Command Schema
+    """
+    def __init__(self, name: str):
+        """Creates a Base Command Schema object
+
+        Args:
+            name (str): Name of the command
+        """
+        self.command_name = name
+        self.attributes = {}
+        
+    def add_attribute(self, name: str, optional: bool, attribute: dict) -> None:
+        """Adds an attribute to the command
+
+        Args:
+            name (str): Name of the attribute
+            optional (bool): Whether the attribute is optional for the command to run
+            attribute (dict): Dictionary detailing the attribute for the specific use case
+        """
+        self.attributes[name] = attribute
+        self.attributes[name]["optional"] = optional
+        
+    def get_name(self) -> str:
+        """Gets the command name
+
+        Returns:
+            str: Command Name
+        """
+        return self.command_name
+        
+    def generate_schema(self) -> dict:
+        schema = {
+            "name": self.command_name
+        }
+        if len(self.attributes.keys()) > 0:
+            schema["attributes"] = self.attributes
+        return schema
+    
+class ConsoleCommand(Command):
+    """Command class for building a console/terminal command
+    """
+        
+    def add_attribute(self, name: str, field: str, optional: bool = True, tag: Union[str,None] = None) -> None:
+        """Adds an attribute to the Console Command
+
+        Args:
+            name (str): Name of the attribute
+            field (str): The name of the field to get the value for the attribute from
+            optional (bool): Whether the attribute is optional for the command to run
+            tag (Union[str,None], optional): Value to use for the tag in the console, I.E. --help or -h. If None, dsl-spa uses --{attribute_name}. Defaults to None.
+        """
+        attribute_dict = {
+            "name": name,
+            "field": field
+        }
+        if tag is not None:
+            attribute_dict["tag"] = tag
+        attribute_dict["optional"] = optional
+        super().add_attribute(name, attribute_dict)
+    
+class PythonCommand(Command):
+    """Command class for executing a python command
+    """
+    def __init__(self, name: str, function_name: str):
+        """Creates a PythonCommand Schema
+
+        Args:
+            name (str): Name of the command
+            function_name (str): Name of the function in the function dict passed to the Pipeline
+        """
+        super().__init__(name)
+        self.function_name = function_name
+        self.params = {}
+        
+    def add_attribute(self, name: str, field: str, optional: bool = True) -> None:
+        """Adds an attribute that will allow your command to include a field's value as an argument to the python function
+
+        Args:
+            name (str): Name of the attribute
+            field (str): The name of the field to get the value for the attribute from
+            optional (bool): Whether the attribute is optional for the command to run
+        """
+        attribute_dict = {
+            "name": name,
+            "field": field
+        }
+        super().add_attribute(name, optional, attribute_dict)
+        
+    def add_param(self, name: str, value: Any) -> None:
+        """Adds a parameter to the Python Function. This is a static value that will be passed to your python function as an argument.
+
+        Args:
+            name (str): Parameter name
+            value (Any): Parameter value
+        """
+        self.params[name] = value
+        
+    def generate_schema(self) -> dict:
+        schema = super().generate_schema()
+        schema["function"] = self.function_name
+        if len(self.params) > 0:
+            schema["params"] = self.params
+        return schema
+        
 class PipelineSchema:
     """Creates Schema for Pipeline
     """    
@@ -1014,6 +1119,27 @@ class PipelineSchema:
         """
         self.build_pipeline_schema()
         return self.schema
+    
+class CommandPipeline(PipelineSchema):
+    
+    def __init__(self, pipeline_name, fields, commands: list[Command]):
+        super().__init__(pipeline_name, fields)
+        self.commands = commands
+        
+    def build_command_schema(self) -> None:
+        """Builds Command Schema
+        """
+        self.schema["commands"] = {}
+        for command in self.commands:
+            name = command.get_name()
+            schema = command.generate_schema()
+            self.schema["commands"][name] = schema
+            
+    def build_pipeline_schema(self) -> None:
+        """Builds Command Pipeline Schema
+        """
+        super().build_pipeline_schema()
+        self.build_command_schema()
         
 class BasicPipelineSchema(PipelineSchema):
     """Creates Schema for Basic Pipeline
@@ -1028,8 +1154,7 @@ class BasicPipelineSchema(PipelineSchema):
             csvs (list[CSV]): List of CSVs for Pipeline
             datasets (list[Dataset]): List of Datasets for pipeline
         """
-        self.name = pipeline_name
-        self.fields = fields
+        super().__init__(pipeline_name, fields)
         self.queries = queries
         self.csvs = csvs
         self.filters: list[Filter] = None
@@ -1041,26 +1166,10 @@ class BasicPipelineSchema(PipelineSchema):
     def build_pipeline_schema(self):
         """Builds Basic Pipeline Schema
         """
-        self.build_fields_schema()
+        super().build_pipeline_schema()
         self.build_queries_schema()
         self.build_csvs_schema()
         self.build_dataset_schema()
-    
-    def build_fields_schema(self):
-        """Builds Fields Schema
-        """
-        fields_schema = {}
-        for field in self.fields:
-            section = field.get_section()
-            sections = section.split('.')
-            sub_schema = fields_schema
-            for sect in sections:
-                if section not in sub_schema.keys():
-                    sub_schema[sect] = {}
-                sub_schema = sub_schema[sect]
-            sub_schema[field.get_name()] = field.generate_schema()
-            
-        self.schema["fields"] = fields_schema
         
     def build_queries_schema(self):
         """Builds Queries Schema
