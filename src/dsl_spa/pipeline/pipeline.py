@@ -333,8 +333,7 @@ class ConsoleCommmandPipeline(CommandPipeline):
         command_dict = self.commands[command_name]
         if self.validate_command(command_name):
             command = command_name
-            for attribute_dict in command_dict["attributes"]:
-                attribute_name = attribute_dict["name"]
+            for attribute_name,attribute_dict in command_dict["attributes"].items():
                 attribute_tag = f"--{attribute_name}"
                 if "tag" in attribute_dict.keys():
                     attribute_tag = attribute_dict["tag"]
@@ -358,8 +357,7 @@ class PythonCommandPipeline(CommandPipeline):
         if self.validate_command(command_name):
             function_name = command_dict["function"]
             args = {}
-            for attribute_dict in command_dict["attributes"]:
-                attribute_name = attribute_dict["name"]
+            for attribute_name,attribute_dict in command_dict["attributes"].items():
                 field_name = attribute_dict["field"]
                 if self.check_for_field(field_name):
                     field_value = self.get_field(field_name)
