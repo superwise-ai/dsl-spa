@@ -264,14 +264,14 @@ class CommandPipeline(Pipeline):
             for command in self.schema["commands"]:
                 command_name = command["name"]
                 if "attributes" in command.keys():
-                    attributes = []
+                    attributes = {}
                     required_attributes = []
                     for attribute in command["attributes"]:
                         attribute_name = attribute["name"]
                         field_name = attribute["field"]
                         required = not attribute["optional"]
                         attribute_dict = {"name": attribute_name, "field": field_name}
-                        attributes.append(attribute_dict)
+                        attributes[attribute_name] = attribute_dict
                         if required:
                             required_attributes.append(attribute_name)
                     command_dict = {
