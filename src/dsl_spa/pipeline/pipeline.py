@@ -236,7 +236,137 @@ class Pipeline:
                 d[k] = {}
             d = d[k]
         d[field_split[-1]] = value
+        
+class CommandPipeline(Pipeline):
+    """Base Command Pipeline class. This class is the super class for any dsl-spa command implementations.
+    Implements the "command" schema for use with an LLM to translate a natural language request into an executable command.
+    """
+    
+    def __init__(self, fields_input_dict: dict, json_schema: dict, connectors: dict[str,Connector]):
+        """Generates a Command Pipeline
 
+        Args:
+            fields_input_dict (dict): Fields Input defining the fields for the pipeline
+            json_schema (dict): The dictionary of the json schema defining the pipeline
+            connectors (dict[str,Connector]): List of connectors
+        """
+        super().__init__(fields_input_dict, json_schema, connectors)
+        self.commands = {}
+        
+    def load_commands(self) -> None:
+        """Loads Commands from the json schema.
+        """
+        if "commands" in self.schema:
+            for command in self.schema["commands"]:
+                command_name = command["name"]
+                if "attributes" in command.keys():
+                    attributes = []
+                    required_attributes = []
+                    for attribute in command["attributes"]:
+                        attribute_name = attribute["name"]
+                        field_name = attribute["field"]
+                        required = not attribute["optional"]
+                        attribute_dict = {"name": attribute_name, "field": field_name}
+                        attributes.append(attribute_dict)
+                        if required:
+                            required_attributes.append(attribute_name)
+                    command_dict = {
+                        "attributes": attributes,
+                        "required_attributes": required_attributes
+                    }
+                    for k in command.keys():
+                        if k in ["attributes"]:
+                            continue
+                        command_dict[k] = command[k]
+                    self.commands[command_name] = command_dict
+                    
+    def validate_command(self, command_name: str) -> bool:
+        """Validates a command has all the required fields in order to execute.
+
+        Args:
+            command_name (str): Name of the command from the schema to validate
+
+        Raises:
+            PipelineException: A command is not found in the schema.
+
+        Returns:
+            bool: Whether the command is valid given the set of fields.
+        """
+        if command_name not in self.commands.keys():
+            raise PipelineException("Command not found")
+        command_dict = self.commands[command_name]
+        for attribute in command_dict["required_attributes"]:
+            field = command_dict["attributes"][attribute]["field"]
+            if not self.check_for_field(field):
+                return False
+        return True
+                    
+    def process_command(self, command_name_field = "command_name"):
+        """Processes the command. This should be implemented in a subclass. It could be generating a text-string
+        to be returned and ran by another system, making an HTTP request, calling a python function on the current system,
+        or any other command processing.
+
+        Args:
+            command_name_field (str, optional): The name of the field holding the command name. Defaults to "command_name".
+        """
+        raise NotImplementedError("This function needs to be implemented in a subclass")
+        
+class ConsoleCommmandPipeline(CommandPipeline):
+    
+    def process_command(self, command_name_field="command_name") -> str:
+        """Generates a text-string that can be executed in a console.
+
+        Args:
+            command_name_field (str, optional): The name of the field holding the command name. Defaults to "command_name".
+
+        Raises:
+            PipelineException: The command does not have the required set of fields to be built.
+
+        Returns:
+            str: A text-string that can be executed in a console.
+        """
+        command_name = self.field_dict[command_name_field]
+        command_dict = self.commands[command_name]
+        if self.validate_command(command_name):
+            command = command_name
+            for attribute_dict in command_dict["attributes"]:
+                attribute_name = attribute_dict["name"]
+                attribute_tag = f"--{attribute_name}"
+                if "tag" in attribute_dict.keys():
+                    attribute_tag = attribute_dict["tag"]
+                field_name = attribute_dict["field"]
+                if self.check_for_field(field_name):
+                    field_value = self.get_field(field_name)
+                    command += f" {attribute_tag} {field_value}"
+            return command
+        else:
+            raise PipelineException("Invalid command request")
+        
+class PythonCommandPipeline(CommandPipeline):
+    
+    def __init__(self, fields_input_dict: dict, json_schema: dict, connectors: dict[str,Connector], functions: dict[str,function]):
+        super().__init__(fields_input_dict, json_schema, connectors)
+        self.functions = functions
+        
+    def process_command(self, command_name_field="command_name") -> None:
+        command_name = self.field_dict[command_name_field]
+        command_dict = self.commands[command_name]
+        if self.validate_command(command_name):
+            function_name = command_dict["function"]
+            args = {}
+            for attribute_dict in command_dict["attributes"]:
+                attribute_name = attribute_dict["name"]
+                field_name = attribute_dict["field"]
+                if self.check_for_field(field_name):
+                    field_value = self.get_field(field_name)
+                    args[attribute_name] = field_value
+            if "params" in command_dict.keys():
+                for k,v in command_dict["params"].items():
+                    args[k] = v
+            self.functions[function_name](**args)
+        else:
+            raise PipelineException("Invalid command request")
+                    
 class BasicPipeline(Pipeline):
     """The BasicPipeline utilizes the Fields implemented in Pipeline and also implements queries, filters, datasets, dataset summarization, and visualizations.
     This Pipeline can be used as is, or implemented in a sub-class to generate streamlined pipelines for various use cases.
