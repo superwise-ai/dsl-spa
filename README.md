@@ -12,6 +12,8 @@ Key Features of DSL-SPA
 
 - Generating Visualizations - generate vega-lite visualizations of query results and data transformations
 
+- Executing Commands - generate command sequences or execute python fucntions
+
 For some examples of what you can do with dsl-spa sdk check out the [streamlit demo](https://pipeline-agent.streamlit.app/).
 
 ## Getting Started
