@@ -1129,11 +1129,10 @@ class CommandPipeline(PipelineSchema):
     def build_command_schema(self) -> None:
         """Builds Command Schema
         """
-        self.schema["commands"] = {}
+        self.schema["commands"] = []
         for command in self.commands:
-            name = command.get_name()
             schema = command.generate_schema()
-            self.schema["commands"][name] = schema
+            self.schema["commands"].append(schema)
             
     def build_pipeline_schema(self) -> None:
         """Builds Command Pipeline Schema
