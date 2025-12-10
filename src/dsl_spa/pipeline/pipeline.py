@@ -5,7 +5,7 @@ from langchain_openai import OpenAIEmbeddings
 from sentence_transformers import util
 import ast
 import altair as alt
-from typing import Any
+from typing import Any, Union
 import os
 
 class PipelineException(Exception):
@@ -41,10 +41,14 @@ class Pipeline:
         self.field_dict = fields_input_dict
         self.schema = json_schema
         self.connectors = connectors
+        self.update_fields(fields_input_dict)
+        
+    def update_fields(self, fields: dict):
+        self.field_dict = fields
         self.populate_default_values()
         self.process_categorical_values()
-        required_fields = self.build_required_fields_list(self.schema["fields"])
-        self.check_for_required_fields(required_fields)
+        self.required_fields = self.build_required_fields_list(self.schema["fields"])
+        self.check_for_required_fields(self.required_fields)
         
     def process_categorical_values(self):
         """Reads the fields in the pipeline schema and converts any categorical field to its appropriate new field.
@@ -344,7 +348,7 @@ class ConsoleCommmandPipeline(CommandPipeline):
         
 class PythonCommandPipeline(CommandPipeline):
     
-    def __init__(self, fields_input_dict: dict, json_schema: dict, connectors: dict[str,Connector], functions: dict[str,function]):
+    def __init__(self, fields_input_dict: dict, json_schema: dict, connectors: dict[str,Connector], functions: dict):
         super().__init__(fields_input_dict, json_schema, connectors)
         self.functions = functions
         
