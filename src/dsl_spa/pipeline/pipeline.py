@@ -241,6 +241,13 @@ class Pipeline:
             d = d[k]
         d[field_split[-1]] = value
         
+    def get_list_of_missing_fields(self, fields_list: list[str]) -> list[str]:
+        missing_fields = []
+        for field in fields_list:
+            if not self.check_for_field(field):
+                missing_fields.append(field)
+        return missing_fields
+        
 class CommandPipeline(Pipeline):
     """Base Command Pipeline class. This class is the super class for any dsl-spa command implementations.
     Implements the "command" schema for use with an LLM to translate a natural language request into an executable command.
@@ -304,6 +311,17 @@ class CommandPipeline(Pipeline):
             if not self.check_for_field(field):
                 return False
         return True
+    
+    def get_missing_fields_for_command(self, command_name: str) -> list[str]:
+        if command_name not in self.commands.keys():
+            raise PipelineException("Command not found")
+        command_dict = self.commands[command_name]
+        required_fields_list = []
+        for attribute in command_dict["required_attributes"]:
+            field = command_dict["attributes"][attribute]["field"]
+            required_fields_list.append(field)
+        missing_fields = self.get_list_of_missing_fields(required_fields_list)
+        return missing_fields
                     
     def process_command(self, command_name_field = "command_name"):
         """Processes the command. This should be implemented in a subclass. It could be generating a text-string
@@ -343,7 +361,11 @@ class ConsoleCommmandPipeline(CommandPipeline):
                     command += f" {attribute_tag} {field_value}"
             return command
         else:
-            raise PipelineException("Invalid command request")
+            missing_fields = self.get_missing_fields_for_command(command_name)
+            if len(missing_fields) > 0:
+                raise PipelineException(f"Missing fields: {", ".join(missing_fields)}")
+            else: 
+                raise PipelineException("Invalid command request")
         
 class PythonCommandPipeline(CommandPipeline):
     
@@ -367,7 +389,11 @@ class PythonCommandPipeline(CommandPipeline):
                     args[k] = v
             self.functions[function_name](**args)
         else:
-            raise PipelineException("Invalid command request")
+            missing_fields = self.get_missing_fields_for_command(command_name)
+            if len(missing_fields) > 0:
+                raise PipelineException(f"Missing fields: {", ".join(missing_fields)}")
+            else: 
+                raise PipelineException("Invalid command request")
                     
 class BasicPipeline(Pipeline):
     """The BasicPipeline utilizes the Fields implemented in Pipeline and also implements queries, filters, datasets, dataset summarization, and visualizations.
