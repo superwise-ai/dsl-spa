@@ -1155,7 +1155,7 @@ class PipelineSchema:
         self.build_pipeline_schema()
         return self.schema
     
-class CommandPipeline(PipelineSchema):
+class CommandPipelineSchema(PipelineSchema):
     
     def __init__(self, pipeline_name, fields, commands: list[Command], command_sequences: list[CommandSequence]):
         super().__init__(pipeline_name, fields)
