@@ -247,6 +247,43 @@ class Pipeline:
             if not self.check_for_field(field):
                 missing_fields.append(field)
         return missing_fields
+    
+    def add_fields_to_clause(self,clause: str, sanitize_for_sql: bool = False) -> str:
+        """Replaces all instances of {field_name} in clause.
+
+        Args:
+            clause (str): Clause to replace field values in.
+            sanitize_for_sql (bool, optional): Whether to sanitize this clause for sql (convert ' to \\\\'). Defaults to False.
+
+        Returns:
+            str: Clause with fields replaced with their value.
+        """
+        index = 0
+        while '{' in clause[index:]:
+            start = clause.find('{', index)
+            end = clause.find('}', index)
+            field = clause[start+1:end]
+            if self.check_for_field(field):
+                value = self.get_field(field)
+                if sanitize_for_sql and isinstance(value,str):
+                    value = self.sanitize_field_for_sql_query(value)
+                clause = clause[:start] + str(value) + clause[end+1:]
+            if end == -1:
+                break
+            index = end+1
+        return clause
+    
+    def sanitize_field_for_sql_query(self,field_value: Any) -> Any:
+        """Sanitizes field_value for sql (converts ' to \\\\')
+
+        Args:
+            field_value (Any): Value to sanitize
+
+        Returns:
+            Any: Field Value with sanitized input for sql
+        """
+        field_value = field_value.replace("'","\\'")
+        return field_value
         
 class CommandPipeline(Pipeline):
     """Base Command Pipeline class. This class is the super class for any dsl-spa command implementations.
@@ -398,6 +435,9 @@ class CommandPipeline(Pipeline):
                 connector_name = connector_dict["name"]
                 param_name = connector_dict["param"]
                 args[param_name] = self.connectors[connector_name]
+        if "field_strings" in command_dict.keys():
+            for k,v in command_dict["field_strings"].items():
+                args[k] = self.add_fields_to_clause(v)
         result = self.functions[function_name](**args)
         if "output_field" in command_dict.keys():
             self.set_field(command_dict["output_field"], result)
@@ -492,31 +532,6 @@ class BasicPipeline(Pipeline):
         self.visualizations = {}
         self.filters = None
     
-    def add_fields_to_clause(self,clause: str, sanitize_for_sql: bool = False) -> str:
-        """Replaces all instances of {field_name} in clause.
-
-        Args:
-            clause (str): Clause to replace field values in.
-            sanitize_for_sql (bool, optional): Whether to sanitize this clause for sql (convert ' to \\'). Defaults to False.
-
-        Returns:
-            str: Clause with fields replaced with their value.
-        """
-        index = 0
-        while '{' in clause[index:]:
-            start = clause.find('{', index)
-            end = clause.find('}', index)
-            field = clause[start+1:end]
-            if self.check_for_field(field):
-                value = self.get_field(field)
-                if sanitize_for_sql and isinstance(value,str):
-                    value = self.sanitize_field_for_sql_query(value)
-                clause = clause[:start] + str(value) + clause[end+1:]
-            if end == -1:
-                break
-            index = end+1
-        return clause
-    
     def has_required_fields(self,required_fields: list[list[str]]) -> bool:
         """Checks if pipeline has any of the required set of fields.
 
@@ -553,18 +568,6 @@ class BasicPipeline(Pipeline):
             value = row[column]
             clause = clause[:start] + str(value) + clause[end+1:]
         return clause
-    
-    def sanitize_field_for_sql_query(self,field_value: Any) -> Any:
-        """Sanitizes field_value for sql (converts ' to \\')
-
-        Args:
-            field_value (Any): Value to sanitize
-
-        Returns:
-            Any: Field Value with sanitized input for sql
-        """
-        field_value = field_value.replace("'","\\'")
-        return field_value
     
     def check_query_for_required_fields(self, query: dict) -> bool:
         """Checks if the required fields in the query are in the pipeline's fields
