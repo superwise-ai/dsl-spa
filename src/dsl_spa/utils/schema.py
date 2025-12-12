@@ -984,6 +984,7 @@ class Command(PipelineComponent):
         self.function_name = function_name
         self.params = {}
         self.connectors = []
+        self.field_strings = {}
         
     def add_attribute(self, name: str, field: str, optional: bool = True) -> None:
         """Adds an attribute that will allow your command to include a field's value as an argument to the python function
@@ -1020,6 +1021,16 @@ class Command(PipelineComponent):
             "name": connector_name,
             "param": param_name
         })
+        
+    def add_field_string(self, name: str, field_string: str):
+        """Adds a field string to the command. Ex. if field_string = 'The number is {base.number}' and there is a field, 
+        base.number = 5, then the value passed to the commands' function would be 'The number is 5'.
+
+        Args:
+            name (str): _description_
+            field_string (str): _description_
+        """
+        self.field_strings[name] = field_string
 
     def get_name(self) -> str:
         """Gets the command name
@@ -1040,8 +1051,8 @@ class Command(PipelineComponent):
             schema["params"] = self.params
         if len(self.connectors) > 0:
             schema["connectors"] = self.connectors
-        if len(self.datasets) > 0:
-            schema["datasets"] = self.datasets
+        if len(self.field_strings) > 0:
+            schema["field_strings"] = self.field_strings
         return schema
     
 class ConsoleCommand(Command):
