@@ -968,30 +968,59 @@ class StackedBarChart(Visualization):
             "description": self.description,
             "tooltip": self.tooltip
         }
-        
+    
 class Command(PipelineComponent):
-    """Base class for generating Command Schema
+    """Command class for executing a python command
     """
-    def __init__(self, name: str):
-        """Creates a Base Command Schema object
+    def __init__(self, name: str, function_name: str, output_field: Union[str,None] = None):
+        """Creates a PythonCommand Schema
 
         Args:
             name (str): Name of the command
+            function_name (str): Name of the function in the function dict passed to the Pipeline
         """
         self.command_name = name
         self.attributes = {}
+        self.function_name = function_name
+        self.params = {}
+        self.connectors = []
         
-    def add_attribute(self, name: str, optional: bool, attribute: dict) -> None:
-        """Adds an attribute to the command
+    def add_attribute(self, name: str, field: str, optional: bool = True) -> None:
+        """Adds an attribute that will allow your command to include a field's value as an argument to the python function
 
         Args:
             name (str): Name of the attribute
+            field (str): The name of the field to get the value for the attribute from
             optional (bool): Whether the attribute is optional for the command to run
-            attribute (dict): Dictionary detailing the attribute for the specific use case
         """
-        self.attributes[name] = attribute
-        self.attributes[name]["optional"] = optional
+        attribute_dict = {
+            "name": name,
+            "field": field,
+            "optional": optional
+        }
+        self.attributes[name] = attribute_dict
         
+    def add_param(self, name: str, value: Any) -> None:
+        """Adds a parameter to the Python Function. This is a static value that will be passed to your python function as an argument.
+
+        Args:
+            name (str): Parameter name
+            value (Any): Parameter value
+        """
+        self.params[name] = value
+        
+    def add_connector(self, connector_name: str, param_name: str) -> None:
+        """Adds a connector to be passed to the function associated with this command
+
+        Args:
+            connector_name (str): Name of the connector
+            param_name (str): Name of the parameter in the function associated with this command
+        """
+        self.connectors.append({
+            "name": connector_name,
+            "param": param_name
+        })
+
     def get_name(self) -> str:
         """Gets the command name
 
@@ -1006,11 +1035,27 @@ class Command(PipelineComponent):
         }
         if len(self.attributes.keys()) > 0:
             schema["attributes"] = self.attributes
+        schema["function"] = self.function_name
+        if len(self.params) > 0:
+            schema["params"] = self.params
+        if len(self.connectors) > 0:
+            schema["connectors"] = self.connectors
+        if len(self.datasets) > 0:
+            schema["datasets"] = self.datasets
         return schema
     
 class ConsoleCommand(Command):
     """Command class for building a console/terminal command
     """
+    
+    def __init__(self, name: str, output_field: Union[str,None] = None):
+        """Creates a ConsoleCommand Schema. This command is used specifically generate a str output that can be executed in a console/termianl.
+
+        Args:
+            name (str): name of the command
+            output_field (Union[str,None], optional): Output field to store result in. Defaults to None.
+        """
+        super().__init__(name, "generate_console_command", output_field)
         
     def add_attribute(self, name: str, field: str, optional: bool = True, tag: Union[str,None] = None) -> None:
         """Adds an attribute to the Console Command
@@ -1021,57 +1066,36 @@ class ConsoleCommand(Command):
             optional (bool): Whether the attribute is optional for the command to run
             tag (Union[str,None], optional): Value to use for the tag in the console, I.E. --help or -h. If None, dsl-spa uses --{attribute_name}. Defaults to None.
         """
-        attribute_dict = {
-            "name": name,
-            "field": field
-        }
+        super().add_attribute(name, field, optional)
         if tag is not None:
-            attribute_dict["tag"] = tag
-        attribute_dict["optional"] = optional
-        super().add_attribute(name, attribute_dict)
-    
-class PythonCommand(Command):
-    """Command class for executing a python command
+            self.attributes[name]["tag"] = tag
+            
+class CommandSequence(PipelineComponent):
+    """CommandSequence class for defining sequence of commands
+
+    Args:
+        PipelineComponent (_type_): _description_
     """
-    def __init__(self, name: str, function_name: str):
-        """Creates a PythonCommand Schema
+    def __init__(self, name: str, commands: list[Command]):
+        """Creates a CommandSequence Schema
 
         Args:
-            name (str): Name of the command
-            function_name (str): Name of the function in the function dict passed to the Pipeline
+            name (str): _description_
+            commands (list[Command]): _description_
         """
-        super().__init__(name)
-        self.function_name = function_name
-        self.params = {}
+        self.sequnce_name = name
+        self.commands = commands
         
-    def add_attribute(self, name: str, field: str, optional: bool = True) -> None:
-        """Adds an attribute that will allow your command to include a field's value as an argument to the python function
+    def get_name(self) -> str:
+        """Gets the name of the command sequence
 
-        Args:
-            name (str): Name of the attribute
-            field (str): The name of the field to get the value for the attribute from
-            optional (bool): Whether the attribute is optional for the command to run
+        Returns:
+            str: Name of the command sequence
         """
-        attribute_dict = {
-            "name": name,
-            "field": field
-        }
-        super().add_attribute(name, optional, attribute_dict)
+        return self.sequnce_name
         
-    def add_param(self, name: str, value: Any) -> None:
-        """Adds a parameter to the Python Function. This is a static value that will be passed to your python function as an argument.
-
-        Args:
-            name (str): Parameter name
-            value (Any): Parameter value
-        """
-        self.params[name] = value
-        
-    def generate_schema(self) -> dict:
-        schema = super().generate_schema()
-        schema["function"] = self.function_name
-        if len(self.params) > 0:
-            schema["params"] = self.params
+    def generate_schema(self):
+        schema = list(map(lambda x: x.get_name(), self.commands))
         return schema
         
 class PipelineSchema:
@@ -1122,9 +1146,10 @@ class PipelineSchema:
     
 class CommandPipeline(PipelineSchema):
     
-    def __init__(self, pipeline_name, fields, commands: list[Command]):
+    def __init__(self, pipeline_name, fields, commands: list[Command], command_sequences: list[CommandSequence]):
         super().__init__(pipeline_name, fields)
         self.commands = commands
+        self.command_sequences = command_sequences
         
     def build_command_schema(self) -> None:
         """Builds Command Schema
@@ -1133,12 +1158,20 @@ class CommandPipeline(PipelineSchema):
         for command in self.commands:
             schema = command.generate_schema()
             self.schema["commands"].append(schema)
+        
+    def build_command_sequence_schema(self) -> None:
+        """Builds Command Sequence Schema
+        """
+        self.schema["command_sequences"] = {}
+        for command_sequence in self.command_sequences:
+            self.schema["command_sequences"][command_sequence.get_name()] = command_sequence.generate_schema()
             
     def build_pipeline_schema(self) -> None:
         """Builds Command Pipeline Schema
         """
         super().build_pipeline_schema()
         self.build_command_schema()
+        self.build_command_sequence_schema()
         
 class BasicPipelineSchema(PipelineSchema):
     """Creates Schema for Basic Pipeline
