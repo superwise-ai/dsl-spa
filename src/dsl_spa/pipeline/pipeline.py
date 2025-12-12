@@ -253,16 +253,26 @@ class CommandPipeline(Pipeline):
     Implements the "command" schema for use with an LLM to translate a natural language request into an executable command.
     """
     
-    def __init__(self, fields_input_dict: dict, json_schema: dict, connectors: dict[str,Connector]):
+    def __init__(self, fields_input_dict: dict, json_schema: dict, connectors: dict[str,Connector], functions_dict: dict):
         """Generates a Command Pipeline
 
         Args:
             fields_input_dict (dict): Fields Input defining the fields for the pipeline
             json_schema (dict): The dictionary of the json schema defining the pipeline
-            connectors (dict[str,Connector]): List of connectors
+            connectors (dict[str,Connector]): Dictionary of connectors
+            functions_dict (dict[str,Callable]): Dictionary of functions
         """
         super().__init__(fields_input_dict, json_schema, connectors)
+        self.functions = functions_dict
         self.commands = {}
+        self.command_sequences = {}
+        self.initiate_command_pipeline()
+        
+    def initiate_command_pipeline(self):
+        """Loads Definitions for Command and Command Sequences
+        """
+        self.load_commands()
+        self.load_command_sequences()
         
     def load_commands(self) -> None:
         """Loads Commands from the json schema.
@@ -270,27 +280,34 @@ class CommandPipeline(Pipeline):
         if "commands" in self.schema:
             for command in self.schema["commands"]:
                 command_name = command["name"]
+                attributes = {}
+                required_attributes = []
                 if "attributes" in command.keys():
-                    attributes = {}
-                    required_attributes = []
                     for attribute in command["attributes"]:
+                        # Build Attribute Details
                         attribute_name = attribute["name"]
-                        field_name = attribute["field"]
                         required = not attribute["optional"]
-                        attribute_dict = {"name": attribute_name, "field": field_name}
+                        if "field" in attribute.keys():
+                            field_name = attribute["field"]
+                            attribute_dict = {"name": attribute_name, "field": field_name}
                         attributes[attribute_name] = attribute_dict
+                        # Compile Required Attributes list
                         if required:
                             required_attributes.append(attribute_name)
-                    command_dict = {
-                        "attributes": attributes,
-                        "required_attributes": required_attributes
-                    }
-                    for k in command.keys():
-                        if k in ["attributes"]:
-                            continue
-                        command_dict[k] = command[k]
+                command_dict = {
+                    "attributes": attributes,
+                    "required_attributes": required_attributes
+                }
+                for k in command.keys():
+                    if k in ["attributes"]:
+                        continue
+                    command_dict[k] = command[k]
                     self.commands[command_name] = command_dict
-                    
+   
+    def load_command_sequences(self) -> None:
+        if "command_sequences" in self.schema:
+            self.command_sequences = self.schema["command_sequences"]
+
     def validate_command(self, command_name: str) -> bool:
         """Validates a command has all the required fields in order to execute.
 
@@ -313,6 +330,17 @@ class CommandPipeline(Pipeline):
         return True
     
     def get_missing_fields_for_command(self, command_name: str) -> list[str]:
+        """Gets the missing required fields for a command
+
+        Args:
+            command_name (str): Name of the command
+
+        Raises:
+            PipelineException: Command with command_name not found
+
+        Returns:
+            list[str]: List of the missing fields
+        """
         if command_name not in self.commands.keys():
             raise PipelineException("Command not found")
         command_dict = self.commands[command_name]
@@ -322,20 +350,64 @@ class CommandPipeline(Pipeline):
             required_fields_list.append(field)
         missing_fields = self.get_list_of_missing_fields(required_fields_list)
         return missing_fields
-                    
-    def process_command(self, command_name_field = "command_name"):
-        """Processes the command. This should be implemented in a subclass. It could be generating a text-string
-        to be returned and ran by another system, making an HTTP request, calling a python function on the current system,
-        or any other command processing.
+    
+    def process_command_sequence(self, command_sequence_field = "command_name"):
+        """Executes a command sequence in order
 
         Args:
-            command_name_field (str, optional): The name of the field holding the command name. Defaults to "command_name".
+            command_sequence_field (str, optional): Pipeline field containing the name of the command sequence. Defaults to "command_name".
+
+        Raises:
+            PipelineException: No Command Sequence with the value of the field command_sequence_field was found
+            PipelineException: The missing fields for a specific command
+            PipelineException: The command request could not be processed
         """
-        raise NotImplementedError("This function needs to be implemented in a subclass")
+        sequence_name = command_sequence_field
+        if sequence_name not in self.command_sequences.keys():
+            raise PipelineException("Command Sequence Not Found")
+        sequnce = self.command_sequences[sequence_name]
+        for command_name in sequnce:
+            if self.validate_command(command_name):
+                self.execute_command(command_name)
+            else:
+                missing_fields = self.get_missing_fields_for_command(command_name)
+                if len(missing_fields) > 0:
+                    raise PipelineException(f"Missing fields: {", ".join(missing_fields)}")
+                else: 
+                    raise PipelineException("Invalid command request")
+                    
+    def execute_command(self, command_name: str):
+        """Executes the function associated with a command and stores its output if it has one.
+
+        Args:
+            command_name (str): Name of the command to execute
+        """
+        command_dict = self.commands[command_name]
+        function_name = command_dict["function"]
+        args = {}
+        for attribute_name,attribute_dict in command_dict["attributes"].items():
+            field_name = attribute_dict["field"]
+            if self.check_for_field(field_name):
+                field_value = self.get_field(field_name)
+                args[attribute_name] = field_value
+        if "params" in command_dict.keys():
+            for k,v in command_dict["params"].items():
+                args[k] = v
+        if "connectors" in command_dict.keys():
+            for connector_dict in command_dict["connectors"]:
+                connector_name = connector_dict["name"]
+                param_name = connector_dict["param"]
+                args[param_name] = self.connectors[connector_name]
+        result = self.functions[function_name](**args)
+        if "output_field" in command_dict.keys():
+            self.set_field(command_dict["output_field"], result)
+    
+    def get_command_sequence_result(self, output_field = "sequence_output"):
+        return self.field_dict[output_field]
         
 class ConsoleCommmandPipeline(CommandPipeline):
     
-    def process_command(self, command_name_field="command_name") -> str:
+    def generate_console_command(self, command_name: str) -> str:
         """Generates a text-string that can be executed in a console.
 
         Args:
@@ -347,7 +419,6 @@ class ConsoleCommmandPipeline(CommandPipeline):
         Returns:
             str: A text-string that can be executed in a console.
         """
-        command_name = self.field_dict[command_name_field]
         command_dict = self.commands[command_name]
         if self.validate_command(command_name):
             command = command_name
@@ -367,33 +438,34 @@ class ConsoleCommmandPipeline(CommandPipeline):
             else: 
                 raise PipelineException("Invalid command request")
         
-class PythonCommandPipeline(CommandPipeline):
-    
-    def __init__(self, fields_input_dict: dict, json_schema: dict, connectors: dict[str,Connector], functions: dict):
-        super().__init__(fields_input_dict, json_schema, connectors)
-        self.functions = functions
-        
-    def process_command(self, command_name_field="command_name") -> None:
-        command_name = self.field_dict[command_name_field]
-        command_dict = self.commands[command_name]
-        if self.validate_command(command_name):
-            function_name = command_dict["function"]
-            args = {}
-            for attribute_name,attribute_dict in command_dict["attributes"].items():
-                field_name = attribute_dict["field"]
-                if self.check_for_field(field_name):
-                    field_value = self.get_field(field_name)
-                    args[attribute_name] = field_value
-            if "params" in command_dict.keys():
-                for k,v in command_dict["params"].items():
-                    args[k] = v
-            self.functions[function_name](**args)
-        else:
-            missing_fields = self.get_missing_fields_for_command(command_name)
-            if len(missing_fields) > 0:
-                raise PipelineException(f"Missing fields: {", ".join(missing_fields)}")
-            else: 
-                raise PipelineException("Invalid command request")
+    def process_command_sequence(self, command_sequence_field = "command_name"):
+        """Executes a command sequence in order
+
+        Args:
+            command_sequence_field (str, optional): Pipeline field containing the name of the command sequence. Defaults to "command_name".
+
+        Raises:
+            PipelineException: No Command Sequence with the value of the field command_sequence_field was found
+            PipelineException: The missing fields for a specific command
+            PipelineException: The command request could not be processed
+        """
+        sequence_name = command_sequence_field
+        if sequence_name not in self.command_sequences.keys():
+            raise PipelineException("Command Sequence Not Found")
+        sequnce = self.command_sequences[sequence_name]
+        for command_name in sequnce:
+            if self.validate_command(command_name):
+                if command_name == "generate_console_command":
+                    result_field = "console_command" if "output_field" not in self.commands[command_name].keys() else self.commands[command_name]["output_field"]
+                    self.set_field(result_field, self.generate_console_command(command_name))
+                else:
+                    self.execute_command(command_name)
+            else:
+                missing_fields = self.get_missing_fields_for_command(command_name)
+                if len(missing_fields) > 0:
+                    raise PipelineException(f"Missing fields: {", ".join(missing_fields)}")
+                else: 
+                    raise PipelineException("Invalid command request")
                     
 class BasicPipeline(Pipeline):
     """The BasicPipeline utilizes the Fields implemented in Pipeline and also implements queries, filters, datasets, dataset summarization, and visualizations.
