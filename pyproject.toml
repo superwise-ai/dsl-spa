@@ -1,6 +1,6 @@
 [project]
 name = "dsl-spa"
-version = "0.3.5"
+version = "0.3.7"
 authors = [
   { name="superwise-brian", email="brian.mcclannahan@superwise.ai" },
 ]
