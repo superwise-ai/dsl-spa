@@ -399,7 +399,7 @@ class CommandPipeline(Pipeline):
             PipelineException: The missing fields for a specific command
             PipelineException: The command request could not be processed
         """
-        sequence_name = command_sequence_field
+        sequence_name = self.get_field(command_sequence_field)
         if sequence_name not in self.command_sequences.keys():
             raise PipelineException("Command Sequence Not Found")
         sequnce = self.command_sequences[sequence_name]
