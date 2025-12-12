@@ -474,7 +474,7 @@ class ConsoleCommmandPipeline(CommandPipeline):
         else:
             missing_fields = self.get_missing_fields_for_command(command_name)
             if len(missing_fields) > 0:
-                raise PipelineException(f"Missing fields: {", ".join(missing_fields)}")
+                raise PipelineException(f"Missing fields: {', '.join(missing_fields)}")
             else: 
                 raise PipelineException("Invalid command request")
         
@@ -503,7 +503,7 @@ class ConsoleCommmandPipeline(CommandPipeline):
             else:
                 missing_fields = self.get_missing_fields_for_command(command_name)
                 if len(missing_fields) > 0:
-                    raise PipelineException(f"Missing fields: {", ".join(missing_fields)}")
+                    raise PipelineException(f"Missing fields: {', '.join(missing_fields)}")
                 else: 
                     raise PipelineException("Invalid command request")
                     
