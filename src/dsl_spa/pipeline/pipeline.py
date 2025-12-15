@@ -306,26 +306,26 @@ class CommandPipeline(Pipeline):
         """
         super().__init__(fields_input_dict, json_schema, connectors)
         self.functions = functions_dict
+        self.actions = {}
         self.commands = {}
-        self.command_sequences = {}
         self.initiate_command_pipeline()
         
     def initiate_command_pipeline(self):
-        """Loads Definitions for Command and Command Sequences
+        """Loads Definitions for Actions and Commands
         """
+        self.load_actions()
         self.load_commands()
-        self.load_command_sequences()
         
-    def load_commands(self) -> None:
-        """Loads Commands from the json schema.
+    def load_actions(self) -> None:
+        """Loads Actions from the json schema.
         """
-        if "commands" in self.schema:
-            for command in self.schema["commands"]:
-                command_name = command["name"]
+        if "actions" in self.schema:
+            for action in self.schema["actions"]:
+                action_name = action["name"]
                 attributes = {}
                 required_attributes = []
-                if "attributes" in command.keys():
-                    for attribute in command["attributes"]:
+                if "attributes" in action.keys():
+                    for attribute in action["attributes"]:
                         # Build Attribute Details
                         attribute_name = attribute["name"]
                         required = not attribute["optional"]
@@ -340,52 +340,52 @@ class CommandPipeline(Pipeline):
                     "attributes": attributes,
                     "required_attributes": required_attributes
                 }
-                for k in command.keys():
+                for k in action.keys():
                     if k in ["attributes"]:
                         continue
-                    command_dict[k] = command[k]
-                    self.commands[command_name] = command_dict
+                    command_dict[k] = action[k]
+                    self.actions[action_name] = command_dict
    
-    def load_command_sequences(self) -> None:
-        if "command_sequences" in self.schema:
-            self.command_sequences = self.schema["command_sequences"]
+    def load_commands(self) -> None:
+        if "commands" in self.schema:
+            self.commands = self.schema["commands"]
 
-    def validate_command(self, command_name: str) -> bool:
+    def validate_action(self, action_name: str) -> bool:
         """Validates a command has all the required fields in order to execute.
 
         Args:
-            command_name (str): Name of the command from the schema to validate
+            action_name (str): Name of the command from the schema to validate
 
         Raises:
-            PipelineException: A command is not found in the schema.
+            PipelineException: The action is not found in the schema.
 
         Returns:
-            bool: Whether the command is valid given the set of fields.
+            bool: Whether the action is valid given the set of fields.
         """
-        if command_name not in self.commands.keys():
-            raise PipelineException("Command not found")
-        command_dict = self.commands[command_name]
+        if action_name not in self.actions.keys():
+            raise PipelineException("Action not found")
+        command_dict = self.actions[action_name]
         for attribute in command_dict["required_attributes"]:
             field = command_dict["attributes"][attribute]["field"]
             if not self.check_for_field(field):
                 return False
         return True
     
-    def get_missing_fields_for_command(self, command_name: str) -> list[str]:
-        """Gets the missing required fields for a command
+    def get_missing_fields_for_action(self, action_name: str) -> list[str]:
+        """Gets the missing required fields for an Action
 
         Args:
-            command_name (str): Name of the command
+            action_name (str): Name of the Action
 
         Raises:
-            PipelineException: Command with command_name not found
+            PipelineException: Action with action_name not found
 
         Returns:
             list[str]: List of the missing fields
         """
-        if command_name not in self.commands.keys():
+        if action_name not in self.actions.keys():
             raise PipelineException("Command not found")
-        command_dict = self.commands[command_name]
+        command_dict = self.actions[action_name]
         required_fields_list = []
         for attribute in command_dict["required_attributes"]:
             field = command_dict["attributes"][attribute]["field"]
@@ -393,66 +393,74 @@ class CommandPipeline(Pipeline):
         missing_fields = self.get_list_of_missing_fields(required_fields_list)
         return missing_fields
     
-    def process_command_sequence(self, command_sequence_field = "command_name"):
-        """Executes a command sequence in order
+    def process_command(self, command_field = "command_name"):
+        """Executes a command's actions in order
 
         Args:
-            command_sequence_field (str, optional): Pipeline field containing the name of the command sequence. Defaults to "command_name".
+            command_field (str, optional): Pipeline field containing the name of the command. Defaults to "command_name".
 
         Raises:
-            PipelineException: No Command Sequence with the value of the field command_sequence_field was found
+            PipelineException: No Command with the value of the field command_field was found
             PipelineException: The missing fields for a specific command
             PipelineException: The command request could not be processed
         """
-        sequence_name = self.get_field(command_sequence_field)
-        if sequence_name not in self.command_sequences.keys():
-            raise PipelineException("Command Sequence Not Found")
-        sequnce = self.command_sequences[sequence_name]
-        for command_name in sequnce:
-            if self.validate_command(command_name):
-                self.execute_command(command_name)
+        command = self.get_field(command_field)
+        if command not in self.commands.keys():
+            raise PipelineException("Command Not Found")
+        command = self.commands[command]
+        for action_name in command:
+            if self.validate_action(action_name):
+                self.execute_action(action_name)
             else:
-                missing_fields = self.get_missing_fields_for_command(command_name)
+                missing_fields = self.get_missing_fields_for_action(action_name)
                 if len(missing_fields) > 0:
                     raise PipelineException(f"Missing fields: {', '.join(missing_fields)}")
                 else: 
-                    raise PipelineException("Invalid command request")
+                    raise PipelineException("Invalid action request")
                     
-    def execute_command(self, command_name: str):
-        """Executes the function associated with a command and stores its output if it has one.
+    def execute_action(self, action_name: str):
+        """Executes the function associated with an action and stores its output if it has one.
 
         Args:
-            command_name (str): Name of the command to execute
+            action_name (str): Name of the action to execute
         """
-        command_dict = self.commands[command_name]
-        function_name = command_dict["function"]
+        action_dict = self.actions[action_name]
+        function_name = action_dict["function"]
         args = {}
-        for attribute_name,attribute_dict in command_dict["attributes"].items():
+        for attribute_name,attribute_dict in action_dict["attributes"].items():
             field_name = attribute_dict["field"]
             if self.check_for_field(field_name):
                 field_value = self.get_field(field_name)
                 args[attribute_name] = field_value
-        if "params" in command_dict.keys():
-            for k,v in command_dict["params"].items():
+        if "params" in action_dict.keys():
+            for k,v in action_dict["params"].items():
                 args[k] = v
-        if "connectors" in command_dict.keys():
-            for connector_dict in command_dict["connectors"]:
+        if "connectors" in action_dict.keys():
+            for connector_dict in action_dict["connectors"]:
                 connector_name = connector_dict["name"]
                 param_name = connector_dict["param"]
                 args[param_name] = self.connectors[connector_name]
-        if "field_strings" in command_dict.keys():
-            for k,v in command_dict["field_strings"].items():
+        if "field_strings" in action_dict.keys():
+            for k,v in action_dict["field_strings"].items():
                 args[k] = self.add_fields_to_clause(v)
         result = self.functions[function_name](**args)
-        if "output_field" in command_dict.keys():
-            self.set_field(command_dict["output_field"], result)
+        if "output_field" in action_dict.keys():
+            self.set_field(action_dict["output_field"], result)
     
-    def get_command_sequence_result(self, output_field = "sequence_output"):
+    def get_command_result(self, output_field = "command_output") -> Any:
+        """Gets the command output
+
+        Args:
+            output_field (str, optional): Name of the field containing the command output. Defaults to "command_output".
+
+        Returns:
+            Any: The value of the field set in output_field
+        """
         return self.field_dict[output_field]
         
 class ConsoleCommmandPipeline(CommandPipeline):
     
-    def generate_console_command(self, command_name: str) -> str:
+    def generate_console_command(self, action_name: str) -> str:
         """Generates a text-string that can be executed in a console.
 
         Args:
@@ -464,10 +472,10 @@ class ConsoleCommmandPipeline(CommandPipeline):
         Returns:
             str: A text-string that can be executed in a console.
         """
-        command_dict = self.commands[command_name]
-        if self.validate_command(command_name):
-            command = command_name
-            for attribute_name,attribute_dict in command_dict["attributes"].items():
+        action_dict = self.actions[action_name]
+        if self.validate_action(action_name):
+            command = action_name
+            for attribute_name,attribute_dict in action_dict["attributes"].items():
                 attribute_tag = f"--{attribute_name}"
                 if "tag" in attribute_dict.keys():
                     attribute_tag = attribute_dict["tag"]
@@ -477,36 +485,36 @@ class ConsoleCommmandPipeline(CommandPipeline):
                     command += f" {attribute_tag} {field_value}"
             return command
         else:
-            missing_fields = self.get_missing_fields_for_command(command_name)
+            missing_fields = self.get_missing_fields_for_action(action_name)
             if len(missing_fields) > 0:
                 raise PipelineException(f"Missing fields: {', '.join(missing_fields)}")
             else: 
-                raise PipelineException("Invalid command request")
+                raise PipelineException("Invalid action request")
         
-    def process_command_sequence(self, command_sequence_field = "command_name"):
+    def process_command(self, command_field = "command_name"):
         """Executes a command sequence in order
 
         Args:
-            command_sequence_field (str, optional): Pipeline field containing the name of the command sequence. Defaults to "command_name".
+            command_field (str, optional): Pipeline field containing the name of the command sequence. Defaults to "command_name".
 
         Raises:
             PipelineException: No Command Sequence with the value of the field command_sequence_field was found
             PipelineException: The missing fields for a specific command
             PipelineException: The command request could not be processed
         """
-        sequence_name = command_sequence_field
-        if sequence_name not in self.command_sequences.keys():
-            raise PipelineException("Command Sequence Not Found")
-        sequnce = self.command_sequences[sequence_name]
-        for command_name in sequnce:
-            if self.validate_command(command_name):
-                if command_name == "generate_console_command":
-                    result_field = "console_command" if "output_field" not in self.commands[command_name].keys() else self.commands[command_name]["output_field"]
-                    self.set_field(result_field, self.generate_console_command(command_name))
+        command_name = self.get_field(command_field)
+        if command_name not in self.commands.keys():
+            raise PipelineException("Command Not Found")
+        sequnce = self.commands[command_name]
+        for action_name in sequnce:
+            if self.validate_action(action_name):
+                if action_name == "generate_console_command":
+                    result_field = "console_command" if "output_field" not in self.actions[action_name].keys() else self.actions[action_name]["output_field"]
+                    self.set_field(result_field, self.generate_console_command(action_name))
                 else:
-                    self.execute_command(command_name)
+                    self.execute_action(action_name)
             else:
-                missing_fields = self.get_missing_fields_for_command(command_name)
+                missing_fields = self.get_missing_fields_for_action(action_name)
                 if len(missing_fields) > 0:
                     raise PipelineException(f"Missing fields: {', '.join(missing_fields)}")
                 else: 
