@@ -1,4 +1,40 @@
-# DSL-SPA Pipelines
+# DSL-SPA Pipelines and Components
+
+# Components
+
+## [Fields](https://github.com/superwise-ai/dsl-spa/blob/e1bdedd19eb90a42b50a60f96da06f67812e6e9b/docs/Creating_a_Pipeline_Schema.md#Fields)
+
+Fields are the only component in every DSL-SPA pipeline. They define the expected input coming from the LLM to the pipeline. Fields can be strings, numerical, bool, or categorical. A quick example of a categorical field would be a field called `base.temperature_scale` where the value is either celsius or fahrenheight. If the value is celsius, a new field called `base.temperature_scale_celsius` will be created and set to `True` (likewise for `base.temperature_scale_fahrenheit` if it is set to fahrenheit). Note, a field for base.temperature_scale_fahrenheit will not be created if `base.temperature_scale` is set to celsius. Fields may also include a description (helpful for documenting the pipeline for future developers to update). 
+
+## [Queries](https://github.com/superwise-ai/dsl-spa/blob/e1bdedd19eb90a42b50a60f96da06f67812e6e9b/docs/Creating_a_Pipeline_Schema.md#Queries)
+
+Queries are used to load data from data stores. All queries should create pandas dataframes (controlled by the connector). A query is comprised of a name, a connector, and a set of sql_clauses. Each sql_clause is defined as optional or not. If it is optional, it will also have a field associated with the clause indicating whether the clause should be included. This is useful for including WHERE clauses based on whether certain fields are included (I.E. if a date range is included etc...)
+
+## [Filters](https://github.com/superwise-ai/dsl-spa/blob/e1bdedd19eb90a42b50a60f96da06f67812e6e9b/docs/Creating_a_Pipeline_Schema.md#Filters)
+
+Filters are a tool that allow for Pipeline outputs to be filtered without needing to rerun data load operations (Queries, CSVs, or Custom Loaders)
+
+## [Datasets](https://github.com/superwise-ai/dsl-spa/blob/e1bdedd19eb90a42b50a60f96da06f67812e6e9b/docs/Creating_a_Pipeline_Schema.md#Datasets)
+
+Datasets are a set of data transformations to be applied to a query. Each dataset is comprised of a dataset name, and a set of operations to create it. The first operation in a dataset must be a reference to a query, a reference to another dataset (defined previously in the schema), or a merging of two datasets (both already defined in the schema). The rest of the operations can be either applying filters, arithmetic colmnwise operations, applying custom functions, or applying functions specific to a custom pipeline.
+
+## Summaries
+
+Summaries are a combined set of dataset summaries. Each dataset summary is created row by row on the associated pandas dataframe. Each dataset summary has a prefix and suffix which allows a developer to build in additional context. Summaries are built to either be returned to a user or passed to a question-response application to be queried by an LLM.
+
+## Visualizations
+
+Visualizations are vega-lite graphs built on top of datasets. Each visualization will have a type, an associated dataset, a title, a description, and a few other attributes that are unique to each graph type.
+
+## Actions
+
+Actions allow a developer to map user requests to actions to be taken. For example, sending an email or applying a change to the GUI.
+
+## Commands
+
+Commands are a set of actions to be executed in a sequence. A developer maps a field (by default it is assuemd to be `command_name`) as a command input and then can execute actions based on other field input.
+
+# Pipelines
 
 ### Pipeline
 
@@ -25,11 +61,11 @@ DSL-SPA has the following implemented classes for creating agentic data-querying
 
 This pipeline is a base class for the data-querying capabilities of DSL-SPA. A user should not instantiate a Basic Pipeline but instead a subclass of it. The Basic Pipeline implements the following tools:
 
- - Queries - Used to query a database with a query string.
- - Datasets - Used to perform data transformations on pandas datasets (typically generate from Queries)
- - Filters - A tool to implement temporary post-query processing on datasets. Filters can be added/removed during a pipelines lifetime without needing to rerun queries. In essence, it lets the user 'filter' the data further without needing to do more prompting.
- - Summaries - Used to create text outputs from datasets. Summaries can then be used with other LLM applications to generate text-response applications.
- - Visualizations - Used to create graphs/visualizations of datasets.
+ - [Queries](#queries) - Used to query a database with a query string.
+ - [Datasets](#datasets) - Used to perform data transformations on pandas datasets (typically generate from Queries)
+ - [Filters](#filters) - A tool to implement temporary post-query processing on datasets. Filters can be added/removed during a pipelines lifetime without needing to rerun queries. In essence, it lets the user 'filter' the data further without needing to do more prompting.
+ - [Summaries](#summaries) - Used to create text outputs from datasets. Summaries can then be used with other LLM applications to generate text-response applications.
+ - [Visualizations](#visualizations) - Used to create graphs/visualizations of datasets.
 
  In order to leverage the Basic Pipeline class, create a Pipeline that extends BasicPipeline and implement the `initialize_data()` and `process_data()` functions.
 
@@ -110,6 +146,11 @@ results = pipeline.get_semantic_cache_result(top_n=<number of top results desire
 ## Command Pipelines
 
 DSL-SPA has two implemented Command Pipeline classes. The [Command Pipeline](#command-pipeline) allows a developer to map user requests to executable actions. The [Console Command Pipeline](#console-command-pipeline) allows a developer to map user requests to output strings that can be input into a console/terminal.
+
+The Command Pipeline adds:
+
+ - [Actions](#actions) - A mapping to a python function to execute with its associated parameters.
+ - [Commands](#commands) - A set of actions to execute based on a request from a user
 
 ### Command Pipeline
 
