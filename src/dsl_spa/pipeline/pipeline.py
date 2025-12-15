@@ -44,6 +44,11 @@ class Pipeline:
         self.update_fields(fields_input_dict)
         
     def update_fields(self, fields: dict):
+        """Updates the pipeline's fields with the new 'fields' dictionary
+
+        Args:
+            fields (dict): New fields to update pipeline with
+        """
         self.field_dict = fields
         self.populate_default_values()
         self.process_categorical_values()
@@ -1283,6 +1288,16 @@ class BasicPipeline(Pipeline):
             return chart
         else:
             return None
+        
+    def initialize_data(self):
+        """Initializes data for pipeline
+        """
+        raise NotImplementedError("This needs to be implemented in a subclass")
+        
+    def process_data(self):
+        """Processes data for pipeline
+        """
+        raise NotImplementedError("This needs to be implemented in a subclass")
 
 class StandardPipeline(BasicPipeline):
     """The StandardPipeline implements the queries, datasets, dataset summarization, and visualizations from the BasicPipeline in a streamlined format. It also includes a pipeline scope and scope description value.
@@ -1319,7 +1334,7 @@ class StandardPipeline(BasicPipeline):
         if "scope_description" not in self.schema.keys():
             return ""
         return self.add_fields_to_clause(self.schema["scope_description"])
-    
+
 class DashboardPipeline(StandardPipeline):
     """The DashboardPipeline uses the implementation of the queries, datasets, dataset summarization, and visualizations from the Standardipeline and also implements filters.
     This pipeline is ideal for an agentic Dashboard.
@@ -1341,6 +1356,13 @@ class DashboardPipeline(StandardPipeline):
         self.load_csvs()
         self.load_filters()
         
+    def process_data(self):
+        """Processes data by building datasets, building the pipeline summary, and building visualizations
+        """
+        self.build_datasets()
+        self.build_summary()
+        self.build_visualizations()
+        
 class BasicSemanticCachePipeline(BasicPipeline):
     """The BasicSemanticCachePipeline is a Specialized Pipeline for leveraging Semantic Caches to simplify LLM use cases. This class needs to have its embedding connected in a subclass.
     This class is ideal for implementing simplified Semantic Caches that would otherwise require large semantic caches to cover many specific values.
@@ -1357,6 +1379,12 @@ class BasicSemanticCachePipeline(BasicPipeline):
         """
         super().__init__(fields_input_dict, json_schema, connectors, functions)
         self.field_cache_dictionary = field_cache_dictionary
+        
+    def initialize_data(self):
+        self.load_cache()
+        
+    def process_data(self):
+        self.prepare_cache()
         
     def load_cache(self) -> None:
         """Loads the semantic cache
