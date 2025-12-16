@@ -103,7 +103,7 @@ Each query should have:
  - connector - The name of the connector as it is passed into the pipeline's connector dictionary
  - clauses - A list of clauses used to build the query string
 
-Each clause in the ``clauses` list should have:
+Each clause in the `clauses` list should have:
  - clause - The query string for this specific clause
  - optional - Whether the query string is optional to include
 
