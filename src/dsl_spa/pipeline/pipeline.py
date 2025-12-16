@@ -55,6 +55,29 @@ class Pipeline:
         self.required_fields = self.build_required_fields_list(self.schema["fields"])
         self.check_for_required_fields(self.required_fields)
         
+    def validate_field_types(self, fields_dict: dict, root: list = []):
+        for key in fields_dict:
+            if not Pipeline.check_if_field_definition(fields_dict[key]):
+                if len(root) == 0:
+                    self.fill_categorical_values(fields_dict[key],[key])
+                else:
+                    self.fill_categorical_values(fields_dict[key],root + key)
+            else:
+                d = fields_dict[key]
+                field = ".".join(root+[key])
+                if self.check_for_field(field):
+                    field_type = d["type"]
+                    value = self.get_field(field)
+                    try:
+                        if field_type in ["string","str"] and not isinstance(value, str):
+                            self.set_field(field,str(value))
+                        elif field_type in ["int","integer"] and not isinstance(value, int):
+                            self.set_field(field,int(value))
+                        elif field_type in ["float","number"]:
+                            self.set_field(field,float(value))
+                    except:
+                        raise PipelineException(f"Could not convert {value} for field {field} to type {field_type}.")
+        
     def process_categorical_values(self):
         """Reads the fields in the pipeline schema and converts any categorical field to its appropriate new field.
         """
@@ -617,18 +640,18 @@ class BasicPipeline(Pipeline):
             query (dict): The query dict definition from the schema
 
         Returns:
-            str: Full query for sql
+            str: Full query for data store
         """
-        sql_query = ""
-        for clause in query["sql_clauses"]:
+        query = ""
+        for clause in query["clauses"]:
             optional = clause["optional"]
-            sql = clause["sql"]
-            sql = self.add_fields_to_clause(sql,sanitize_for_sql=True)
+            clause_text = clause["clause"]
+            clause_text = self.add_fields_to_clause(clause_text,sanitize_for_sql=True)
             if optional and self.check_for_field(clause["field"]):
-                sql_query += sql
+                query += clause_text
             elif not optional:
-                sql_query += sql
-        return sql_query
+                query += clause_text
+        return query
     
     def check_if_query_has_minimum_number_of_results(self, query: dict):
         """_summary_
@@ -660,16 +683,16 @@ class BasicPipeline(Pipeline):
         has_exclude_fields = self.check_query_for_exclude_fields(query)
         return has_required_fields and not has_exclude_fields
         
-    def run_query(self, query: dict, sql_query: str):
-        """Runs the sql_query based on the connection defined in the query schema.
+    def run_query(self, query: dict, query_string: str):
+        """Runs the query_string based on the connection defined in the query schema.
 
         Args:
             query (dict): Query dict definition from the schema
-            sql_query (str): SQL query to be run
+            query_string (str): Query string to be run
         """
         query_name = query["name"]
         connector_name = query["connector"]
-        self.queries[query_name] = self.connectors[connector_name].query(sql_query)
+        self.queries[query_name] = self.connectors[connector_name].query(query_string)
         
     def validate_query_results(self, query: dict):
         """Validates the query output meets the requirements set by the schema
@@ -686,8 +709,8 @@ class BasicPipeline(Pipeline):
             for query in self.schema["queries"]:
                 query_validated = self.validate_query_input(query)
                 if query_validated:
-                    sql_query = self.build_query(query)
-                    self.run_query(query, sql_query)
+                    query_string = self.build_query(query)
+                    self.run_query(query, query_string)
                     self.validate_query_results(query)
                     
     def load_csvs(self):
