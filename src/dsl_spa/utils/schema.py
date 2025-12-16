@@ -64,11 +64,11 @@ class PipelineField(PipelineComponent):
         """
         return self.section
 
-class SQLQuery(PipelineComponent):
-    """SQL Query Definition
+class Query(PipelineComponent):
+    """Query Definition
     """
     def __init__(self, query_name: str, connector_name: str):
-        """Creates SQL Query Definition
+        """Creates Query Definition
 
         Args:
             query_name (str): Name of Query
@@ -86,16 +86,16 @@ class SQLQuery(PipelineComponent):
         """
         return self.name
         
-    def add_clause(self, sql_clause: str, optional: bool, field_required: str = None):
-        """Adds SQL Clause to SQL definition
+    def add_clause(self, clause: str, optional: bool, field_required: str = None):
+        """Adds Clause to Query definition
 
         Args:
-            sql_clause (str): sql clause to add
+            clause (str): database query clause to add
             optional (bool): whether clause is optional
             field_required (str, optional): The required field to run. Set this to none unless optional is true. Defaults to None.
         """
         clause = {
-            "sql": sql_clause,
+            "clause": clause,
             "optional": optional
         }
         if optional:
@@ -111,15 +111,15 @@ class SQLQuery(PipelineComponent):
         query_dict = {
             "name": self.name,
             "connector": self.connector,
-            "sql_clauses": self.clauses
+            "clauses": self.clauses
         }
         return query_dict
         
-class AdvancedSQLQuery(SQLQuery):
-    """Advanced SQL Query Definition
+class AdvancedQuery(Query):
+    """Advanced Query Definition
     """
     def __init__(self, query_name: str, connector_name: str, min_results: int = None, error_message: str = None, required_fields: list[list[str]] = None, exclude_fields: list[list[str]] = None):
-        """Creates an Advanced SQL Query Definition
+        """Creates an Advanced Query Definition
 
         Args:
             query_name (str): Name of Query
@@ -136,10 +136,10 @@ class AdvancedSQLQuery(SQLQuery):
         self.exclude_fields = exclude_fields
         
     def generate_schema(self) -> dict:        
-        """Generates Schema for Pipeline Advanced SQL Query
+        """Generates Schema for Pipeline Advanced Query
 
         Returns:
-            dict: Dictionary defining Pipeline Advanced SQL Query
+            dict: Dictionary defining Pipeline Advanced Query
         """
         query_dict = super().generate_schema()
         if self.min_results is not None:
@@ -1096,7 +1096,7 @@ class Command(PipelineComponent):
             actions (list[Action]): list of actions that define the command
         """
         self.command_name = name
-        self.commands = actions
+        self.actions = actions
         
     def get_name(self) -> str:
         """Gets the name of the command
@@ -1107,7 +1107,7 @@ class Command(PipelineComponent):
         return self.command_name
         
     def generate_schema(self):
-        schema = list(map(lambda x: x.get_name(), self.commands))
+        schema = list(map(lambda x: x.get_name(), self.actions))
         return schema
         
 class PipelineSchema:
@@ -1188,13 +1188,13 @@ class CommandPipelineSchema(PipelineSchema):
 class BasicPipelineSchema(PipelineSchema):
     """Creates Schema for Basic Pipeline
     """    
-    def __init__(self, pipeline_name: str, fields: list[PipelineField], queries: list[SQLQuery], csvs: list[CSV], datasets: list[Dataset]):
+    def __init__(self, pipeline_name: str, fields: list[PipelineField], queries: list[Query], csvs: list[CSV], datasets: list[Dataset]):
         """Creates Schema for Basic Pipeline
 
         Args:
             pipeline_name (str): Pipeline Name
             fields (list[PipelineField]): List of fields for pipeline
-            queries (list[SQLQuery]): List of SQL Queries for pipeline
+            queries (list[Query]): List of Queries for pipeline
             csvs (list[CSV]): List of CSVs for Pipeline
             datasets (list[Dataset]): List of Datasets for pipeline
         """
@@ -1250,13 +1250,13 @@ class BasicPipelineSchema(PipelineSchema):
 class StandardPipelineSchema(BasicPipelineSchema):
     """Creates Schema for Standard Pipeline
     """    
-    def __init__(self, pipeline_name: str, fields: list[PipelineField], queries: list[SQLQuery], csvs: list[CSV], datasets: list[Dataset], scope: str, scope_description: str, summary: Summary = None, visualizations: list[Visualization] = None):
+    def __init__(self, pipeline_name: str, fields: list[PipelineField], queries: list[Query], csvs: list[CSV], datasets: list[Dataset], scope: str, scope_description: str, summary: Summary = None, visualizations: list[Visualization] = None):
         """Creates Schema for Standard Pipeline
 
         Args:
             pipeline_name (str): Pipeline Name
             fields (list[PipelineField]): List of fields for pipeline
-            queries (list[SQLQuery]): List of SQL Queries for pipeline
+            queries (list[Query]): List of Queries for pipeline
             csvs (list[CSV]): List of CSVs for Pipeline
             datasets (list[Dataset]): List of Datasets for pipeline
             scope (str): Definition of scope of the pipeline
@@ -1297,13 +1297,13 @@ class StandardPipelineSchema(BasicPipelineSchema):
 class DashboardPipelineSchema(StandardPipelineSchema):
     """Creates Schema for Dashboard Pipeline
     """
-    def __init__(self, pipeline_name: str, fields: list[PipelineField], queries: list[SQLQuery], csvs: list[CSV], filters: list[Filter], datasets: list[Dataset], scope: str, scope_description: str, summary: Summary = None, visualizations: list[Visualization] = None):
+    def __init__(self, pipeline_name: str, fields: list[PipelineField], queries: list[Query], csvs: list[CSV], filters: list[Filter], datasets: list[Dataset], scope: str, scope_description: str, summary: Summary = None, visualizations: list[Visualization] = None):
         """Creates Schema for Dashboard Pipeline
 
         Args:
             pipeline_name (str): Pipeline Name
             fields (list[PipelineField]): List of fields for pipeline
-            queries (list[SQLQuery]): List of SQL Queries for pipeline
+            queries (list[Query]): List of Queries for pipeline
             csvs (list[CSV]): List of CSVs for Pipeline
             filters (list[Filter]): List of Filters for pipeline
             datasets (list[Dataset]): List of Datasets for pipeline
@@ -1324,13 +1324,13 @@ class DashboardPipelineSchema(StandardPipelineSchema):
 class SemanticCachePipelineSchema(BasicPipelineSchema):
     """Creates Schema for Semantic Cache Pipeline
     """
-    def __init__(self, pipeline_name: str, fields: list[PipelineField], queries: list[SQLQuery], csvs: list[CSV], datasets: list[Dataset], semantic_cache_dataset: str, results_columns: list[str], empty_cache_error_message: str = None):
+    def __init__(self, pipeline_name: str, fields: list[PipelineField], queries: list[Query], csvs: list[CSV], datasets: list[Dataset], semantic_cache_dataset: str, results_columns: list[str], empty_cache_error_message: str = None):
         """Creates Schema for Semantic Cache Pipeline
 
         Args:
             pipeline_name (str): Pipeline Name
             fields (list[PipelineField]): List of fields for pipeline
-            queries (list[SQLQuery]): List of SQL Queries for pipeline
+            queries (list[Query]): List of Queries for pipeline
             csvs (list[CSV]): List of CSVs for Pipeline
             datasets (list[Dataset]): List of Datasets for pipeline
             semantic_cache_dataset (str): Name of dataset housing semantic cache
