@@ -1110,7 +1110,7 @@ class BasicPipeline(Pipeline):
         for dataset_name in datasets_to_summarize:
             summary += self.summarize_dataset(dataset_name)
         if "suffix" in self.schema["summary"].keys():
-            summary = self.add_fields_to_clause(self.schema["summary"]["suffix"])
+            summary += self.add_fields_to_clause(self.schema["summary"]["suffix"])
         self.summary = summary
     
     def get_summary(self) -> str:
