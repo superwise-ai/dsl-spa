@@ -1,0 +1,126 @@
+project_id,activity_name,duration,days_left,activity_status
+P001,Planning,15,0,Complete
+P001,Design,27,0,Complete
+P001,Procurement,15,0,Complete
+P001,Site Preparation,19,0,Complete
+P001,Foundation Work,75,0,Complete
+P001,Structural Framing,27,0,Complete
+P001,Roofing,71,0,Complete
+P001,Exterior Cladding,31,0,Complete
+P001,Interior Construction,82,0,Complete
+P001,Mechanical Systems Installation,59,0,Complete
+P001,Electrical Systems Installation,82,0,Complete
+P001,Plumbing Installation,59,0,Complete
+P001,HVAC Installation,63,0,Complete
+P001,Elevator Installation,39,0,Complete
+P001,Safety Systems Installation,39,0,Complete
+P001,Flooring,43,0,Complete
+P001,Painting and Finishing,31,0,Complete
+P001,Exterior Landscaping,43,0,Complete
+P001,Interior Decor,82,46,In Progress
+P001,Furnishing,31,31,Not Started
+P001,Testing and Commissioning,39,39,Not Started
+P001,Final Inspection,11,11,Not Started
+P001,Regulatory Approval,19,19,Not Started
+P001,Cleanup,15,15,Not Started
+P001,Site Restoration,39,39,Not Started
+P002,Planning,21,0,Complete
+P002,Design,17,0,Complete
+P002,Procurement,12,0,Complete
+P002,Site Preparation,38,0,Complete
+P002,Foundation Work,46,0,Complete
+P002,Structural Framing,63,0,Complete
+P002,Roofing,63,0,Complete
+P002,Exterior Cladding,46,0,Complete
+P002,Interior Construction,63,0,Complete
+P002,Mechanical Systems Installation,72,0,Complete
+P002,Electrical Systems Installation,51,0,Complete
+P002,Plumbing Installation,72,0,Complete
+P002,HVAC Installation,72,0,Complete
+P002,Elevator Installation,42,0,Complete
+P002,Safety Systems Installation,42,0,Complete
+P002,Flooring,55,0,Complete
+P002,Painting and Finishing,34,7,In Progress
+P002,Exterior Landscaping,68,68,Not Started
+P002,Interior Decor,63,63,Not Started
+P002,Furnishing,72,72,Not Started
+P002,Testing and Commissioning,46,46,Not Started
+P002,Final Inspection,17,17,Not Started
+P002,Regulatory Approval,25,25,Not Started
+P002,Cleanup,34,34,Not Started
+P002,Site Restoration,25,25,Not Started
+P003,Planning,32,0,Complete
+P003,Design,56,0,Complete
+P003,Procurement,32,0,Complete
+P003,Site Preparation,88,0,Complete
+P003,Foundation Work,160,0,Complete
+P003,Structural Framing,64,0,Complete
+P003,Roofing,152,0,Complete
+P003,Exterior Cladding,72,0,Complete
+P003,Interior Construction,104,0,Complete
+P003,Mechanical Systems Installation,112,52,In Progress
+P003,Electrical Systems Installation,104,104,Not Started
+P003,Plumbing Installation,104,104,Not Started
+P003,HVAC Installation,96,96,Not Started
+P003,Elevator Installation,56,56,Not Started
+P003,Safety Systems Installation,72,72,Not Started
+P003,Flooring,72,72,Not Started
+P003,Painting and Finishing,80,80,Not Started
+P003,Exterior Landscaping,96,96,Not Started
+P003,Interior Decor,88,88,Not Started
+P003,Furnishing,128,128,Not Started
+P003,Testing and Commissioning,128,128,Not Started
+P003,Final Inspection,48,48,Not Started
+P003,Regulatory Approval,24,24,Not Started
+P003,Cleanup,48,48,Not Started
+P003,Site Restoration,56,56,Not Started
+P004,Planning,30,0,Complete
+P004,Design,35,0,Complete
+P004,Procurement,15,0,Complete
+P004,Site Preparation,56,0,Complete
+P004,Foundation Work,61,0,Complete
+P004,Structural Framing,35,0,Complete
+P004,Roofing,61,0,Complete
+P004,Exterior Cladding,30,0,Complete
+P004,Interior Construction,101,0,Complete
+P004,Mechanical Systems Installation,91,0,Complete
+P004,Electrical Systems Installation,91,0,Complete
+P004,Plumbing Installation,61,0,Complete
+P004,HVAC Installation,101,12,In Progress
+P004,Elevator Installation,50,50,Not Started
+P004,Safety Systems Installation,45,45,Not Started
+P004,Flooring,45,45,Not Started
+P004,Painting and Finishing,40,40,Not Started
+P004,Exterior Landscaping,86,86,Not Started
+P004,Interior Decor,76,76,Not Started
+P004,Furnishing,81,81,Not Started
+P004,Testing and Commissioning,56,56,Not Started
+P004,Final Inspection,25,25,Not Started
+P004,Regulatory Approval,20,20,Not Started
+P004,Cleanup,25,25,Not Started
+P004,Site Restoration,30,30,Not Started
+P005,Planning,28,0,Complete
+P005,Design,24,0,Complete
+P005,Procurement,14,0,Complete
+P005,Site Preparation,33,0,Complete
+P005,Foundation Work,82,0,Complete
+P005,Structural Framing,38,0,Complete
+P005,Roofing,53,0,Complete
+P005,Exterior Cladding,48,0,Complete
+P005,Interior Construction,53,0,Complete
+P005,Mechanical Systems Installation,62,0,Complete
+P005,Electrical Systems Installation,48,0,Complete
+P005,Plumbing Installation,67,0,Complete
+P005,HVAC Installation,101,0,Complete
+P005,Elevator Installation,33,0,Complete
+P005,Safety Systems Installation,48,11,In Progress
+P005,Flooring,72,72,Not Started
+P005,Painting and Finishing,62,62,Not Started
+P005,Exterior Landscaping,57,57,Not Started
+P005,Interior Decor,57,57,Not Started
+P005,Furnishing,72,72,Not Started
+P005,Testing and Commissioning,91,91,Not Started
+P005,Final Inspection,19,19,Not Started
+P005,Regulatory Approval,19,19,Not Started
+P005,Cleanup,19,19,Not Started
+P005,Site Restoration,48,48,Not Started
