@@ -1,5 +1,22 @@
 from typing import Any, Union
 
+class PipelineSchemaException(Exception):
+    """Pipeline Schema Exception. A PipelineSchemaException is created when an error is generated trying to create the Pipeline Schema.
+    Distinguishes exceptions generated based on the pipeline schema from exceptions generated from standard python errors.
+    """
+    def __init__(self, error: str):
+        """Creates PipelineException
+
+        Args:
+            error (str): Pipeline Error
+        """
+        self.pipeline_error = error
+        super().__init__(error)
+        
+    def __str__(self):
+        return f"Pipeline Schema Exception: {self.pipeline_error}"
+
+
 class PipelineComponent:
     """Base PipelineComponent class.
     """        
@@ -25,6 +42,16 @@ class PipelineField(PipelineComponent):
             section_name (str, optional): Section for Field. If schema is flat use "base". Defaults to "base".
             default (Any, optional): default value for Field. Defaults to "base".
         """
+        if not isinstance(field_name, str):
+            raise PipelineSchemaException(f"field_name should be a str, found {type(field_name)}")
+        if not isinstance(field_type, str):
+            raise PipelineSchemaException(f"field_type should be a str, found {type(field_type)}")
+        if not isinstance(required, bool):
+            raise PipelineSchemaException(f"field_name required be a bool, found {type(required)}")
+        if not isinstance(description, str):
+            raise PipelineSchemaException(f"description should be a str, found {type(description)}")
+        if not isinstance(section_name, str):
+            raise PipelineSchemaException(f"section_name should be a str, found {type(section_name)}")
         self.name = field_name
         self.type = field_type
         self.required = required
@@ -74,6 +101,10 @@ class Query(PipelineComponent):
             query_name (str): Name of Query
             connector_name (str): Name of Connector
         """
+        if not isinstance(query_name, str):
+            raise PipelineSchemaException(f"query_name should be a str, found {type(query_name)}")
+        if not isinstance(connector_name, str):
+            raise PipelineSchemaException(f"connector_name should be a str, found {type(connector_name)}")
         self.name = query_name
         self.connector = connector_name
         self.clauses = []
@@ -94,6 +125,12 @@ class Query(PipelineComponent):
             optional (bool): whether clause is optional
             field_required (str, optional): The required field to run. Set this to none unless optional is true. Defaults to None.
         """
+        if not isinstance(clause, str):
+            raise PipelineSchemaException(f"clause should be a str, found {type(clause)}")
+        if not isinstance(optional, str):
+            raise PipelineSchemaException(f"optional should be a bool, found {type(optional)}")
+        if field_required is not None and not isinstance(field_required, str):
+            raise PipelineSchemaException(f"field_required should be a str, found {type(field_required)}")
         clause = {
             "clause": clause,
             "optional": optional
@@ -130,6 +167,14 @@ class AdvancedQuery(Query):
             exclude_fields (list[list[str]], optional): Fields that would indicate to exclude running the query. If None is excluded. Defaults to None.
         """
         super().__init__(query_name,connector_name)
+        if min_results is not None and not isinstance(min_results, int):
+            raise PipelineSchemaException(f"min_results should be a int, found {type(min_results)}")
+        if error_message is not None and not isinstance(error_message, str):
+            raise PipelineSchemaException(f"error_message should be a str, found {type(error_message)}")
+        if required_fields is not None and not isinstance(required_fields, list):
+            raise PipelineSchemaException(f"required_fields should be a list, found {type(required_fields)}")
+        if exclude_fields is not None and not isinstance(exclude_fields, list):
+            raise PipelineSchemaException(f"exclude_fields should be a list, found {type(exclude_fields)}")
         self.min_results = min_results
         self.error_message = error_message
         self.required_fields = required_fields
@@ -163,6 +208,12 @@ class CSV(PipelineComponent):
             connector_name (str): Name of Connector
             filename (str): Name of csv file in local storage
         """
+        if not isinstance(csv_name, str):
+            raise PipelineSchemaException(f"csv_name should be a str, found {type(csv_name)}")
+        if not isinstance(connector_name, str):
+            raise PipelineSchemaException(f"connector_name should be a str, found {type(connector_name)}")
+        if not isinstance(filename, str):
+            raise PipelineSchemaException(f"filename should be a str, found {type(filename)}")
         self.name = csv_name
         self.connector = connector_name
         self.csv_name = filename
@@ -176,6 +227,10 @@ class CSV(PipelineComponent):
             column_name (str): Name of column to filter the CSV on
             value (Any): Value to filter column on (can be field value by using '{field name}')
         """
+        if not isinstance(field_name, str):
+            raise PipelineSchemaException(f"field_name should be a str, found {type(field_name)}")
+        if not isinstance(column_name, str):
+            raise PipelineSchemaException(f"column_name should be a str, found {type(column_name)}")
         self.column_filters.append({
             "field": field_name,
             "column": column_name,
@@ -211,6 +266,16 @@ class Filter(PipelineComponent):
             query_name (str): Query Name to load filter values from
             include_any (bool, optional): Whether to include "Any" as an option in the filter. Defaults to True.
         """
+        if not isinstance(filter_name, str):
+            raise PipelineSchemaException(f"filter_name should be a str, found {type(filter_name)}")
+        if not isinstance(display_name, str):
+            raise PipelineSchemaException(f"display_name should be a str, found {type(display_name)}")
+        if not isinstance(column_name, str):
+            raise PipelineSchemaException(f"column_name should be a str, found {type(column_name)}")
+        if not isinstance(query_name, str):
+            raise PipelineSchemaException(f"query_name should be a str, found {type(query_name)}")
+        if include_any is not None and not isinstance(include_any, bool):
+            raise PipelineSchemaException(f"include_any should be a str, found {type(include_any)}")
         self.name = filter_name
         self.display_name = display_name
         self.column_name = column_name
@@ -248,6 +313,8 @@ class Dataset(PipelineComponent):
         Args:
             dataset_name (str): Name of Dataset
         """
+        if not isinstance(dataset_name, str):
+            raise PipelineSchemaException(f"dataset_name should be a str, found {type(dataset_name)}")
         self.name = dataset_name
         self.create_schema = None
         self.operations = []
@@ -269,6 +336,8 @@ class Dataset(PipelineComponent):
         Raises:
             ValueError: Adding too many create operations
         """
+        if not isinstance(query_name, str):
+            raise PipelineSchemaException(f"query_name should be a str, found {type(query_name)}")
         if self.create_schema is not None:
             raise ValueError("A dataset can only have one create operation.")
             
@@ -286,6 +355,8 @@ class Dataset(PipelineComponent):
         Raises:
             ValueError: Adding too many create operations
         """
+        if not isinstance(dataset_name, str):
+            raise PipelineSchemaException(f"dataset_name should be a str, found {type(dataset_name)}")
         if self.create_schema is not None:
             raise ValueError("A dataset can only have one create operation.")
         
@@ -309,8 +380,18 @@ class Dataset(PipelineComponent):
             ValueError: Adding too many create operations
             AttributeError: How must be one of [left,right,inner,outer]
         """
+        if not isinstance(dataset1_name, str):
+            raise PipelineSchemaException(f"dataset1_name should be a str, found {type(dataset1_name)}")
+        if not isinstance(dataset2_name, str):
+            raise PipelineSchemaException(f"dataset2_name should be a str, found {type(dataset2_name)}")
+        if not isinstance(how, str):
+            raise PipelineSchemaException(f"how should be a str, found {type(how)}")
+        if not isinstance(left_on, str):
+            raise PipelineSchemaException(f"left_on should be a str, found {type(left_on)}")
+        if not isinstance(right_on, str):
+            raise PipelineSchemaException(f"right_on should be a str, found {type(right_on)}")
         if self.create_schema is not None:
-            raise ValueError("A dataset can only have one create operation (create from query/dataset or merge two datasets).")
+            raise PipelineSchemaException("A dataset can only have one create operation (create from query/dataset or merge two datasets).")
         
         how = how.lower()
         if how not in ["left","right","inner","outer"]:
@@ -334,6 +415,13 @@ class Dataset(PipelineComponent):
             function_fields_dict (dict, optional): Dictionary of Fields to map to parameters for the function. If None is excluded from schema. Defaults to None.
             function_params_dict (dict, optional): Dictionary of static parameters to map to parameters for the function. If None is excluded from schema. Defaults to None.
         """
+        if not isinstance(function_name, str):
+            raise PipelineSchemaException(f"function_name should be a str, found {type(function_name)}")
+        if function_fields_dict is not None and not isinstance(function_fields_dict, dict):
+            raise PipelineSchemaException(f"function_fields_dict should be a dict, found {type(function_fields_dict)}")
+        if function_params_dict is not None and not isinstance(function_params_dict, dict):
+            raise PipelineSchemaException(f"function_params_dict should be a dict, found {type(function_params_dict)}")
+        
         function_dict = {
             "type" : "function",
             "name" : function_name
@@ -353,6 +441,8 @@ class Dataset(PipelineComponent):
         Args:
             filters_list (list[str]): List of Filters to apply
         """
+        if not isinstance(filters_list, list):
+            raise PipelineSchemaException(f"filters_list should be a list, found {type(filters_list)}")
         self.operations.append({
             "type": "filter",
             "filters": filters_list
@@ -369,6 +459,12 @@ class Dataset(PipelineComponent):
         Raises:
             AttributeError: _description_
         """
+        if not isinstance(arithmetic_operator, str):
+            raise PipelineSchemaException(f"arithmetic_operator should be a str, found {type(arithmetic_operator)}")
+        if not isinstance(column, str):
+            raise PipelineSchemaException(f"column should be a str, found {type(column)}")
+        if not isinstance(by, float):
+            raise PipelineSchemaException(f"by should be a float, found {type(by)}")
         if arithmetic_operator not in ["+","-","*","/"]:
             raise AttributeError('arithmetic_operation must be one of "+","-","*","/"')
         
@@ -410,6 +506,16 @@ class SummaryDataset(Dataset):
             remove_comma (bool, optional): Whether to remove a potential last comma after the last row summary is created. Defaults to False.
             empty_dataset (str, optional): Summary to put in place when dataset is empty. Defaults to None.
         """
+        if not isinstance(summary_by_row, str):
+            raise PipelineSchemaException(f"summary_by_row should be a str, found {type(summary_by_row)}")
+        if summary_prefix is not None and not isinstance(summary_prefix, str):
+            raise PipelineSchemaException(f"summary_prefix should be a str, found {type(summary_prefix)}")
+        if summary_suffix is not None and not isinstance(summary_suffix, str):
+            raise PipelineSchemaException(f"summary_suffix should be a str, found {type(summary_suffix)}")
+        if remove_comma is not None and not isinstance(remove_comma, bool):
+            raise PipelineSchemaException(f"remove_comma should be a bool, found {type(remove_comma)}")
+        if empty_dataset is not None and not isinstance(empty_dataset, str):
+            raise PipelineSchemaException(f"empty_dataset should be a str, found {type(empty_dataset)}")
         super().__init__(dataset_name)
         self.prefix = summary_prefix
         self.summary = summary_by_row
@@ -442,6 +548,28 @@ class SemanticCacheDataset(Dataset):
         })
         
     def add_open_ai_make_cache_comparisons(self, input_field_name: str, open_ai_api_key: str, open_ai_base_url: str = None, open_api_model_name: str = None, similarity_minimum: float = None) -> None:
+        """_summary_
+
+        Args:
+            input_field_name (str): _description_
+            open_ai_api_key (str): _description_
+            open_ai_base_url (str, optional): _description_. Defaults to None.
+            open_api_model_name (str, optional): _description_. Defaults to None.
+            similarity_minimum (float, optional): _description_. Defaults to None.
+
+        Raises:
+            PipelineSchemaException: _description_
+        """
+        if not isinstance(input_field_name, str):
+            raise PipelineSchemaException(f"input_field_name should be a str, found {type(input_field_name)}")
+        if not isinstance(open_ai_api_key, str):
+            raise PipelineSchemaException(f"open_ai_api_key should be a str, found {type(open_ai_api_key)}")
+        if open_ai_base_url is not None and not isinstance(open_ai_base_url, str):
+            raise PipelineSchemaException(f"open_ai_base_url should be a str, found {type(open_ai_base_url)}")
+        if open_api_model_name is not None and not isinstance(open_api_model_name, str):
+            raise PipelineSchemaException(f"open_api_model_name should be a str, found {type(open_api_model_name)}")
+        if similarity_minimum is not None and not isinstance(similarity_minimum, float):
+            raise PipelineSchemaException(f"similarity_minimum should be a float, found {type(similarity_minimum)}")
         operation = {
             "type": "cleanse_cache",
             "params": {
@@ -473,6 +601,10 @@ class AdvancedDataset(SummaryDataset):
             required_fields (list[list[str]], optional): Fields Required to run query. If None is excluded. Defaults to None.
             exclude_fields (list[list[str]], optional): Fields that would indicate to exclude running the query. If None is excluded. Defaults to None.
         """
+        if required_fields is not None and not isinstance(required_fields, list):
+            raise PipelineSchemaException(f"required_fields should be a list, found {type(required_fields)}")
+        if exclude_fields is not None and not isinstance(exclude_fields, list):
+            raise PipelineSchemaException(f"exclude_fields should be a list, found {type(exclude_fields)}")
         super().__init__(dataset_name, summary_by_row, summary_prefix, summary_suffix, remove_comma)
         self.required_fields = required_fields
         self.exclude_fields = exclude_fields
@@ -488,6 +620,12 @@ class AdvancedDataset(SummaryDataset):
         Raises:
             ValueError: Adding too many create operations
         """
+        if not isinstance(query_name, str):
+            raise PipelineSchemaException(f"query_name should be a str, found {type(query_name)}")
+        if required_fields is not None and not isinstance(required_fields, list):
+            raise PipelineSchemaException(f"required_fields should be a list, found {type(required_fields)}")
+        if exclude_fields is not None and not isinstance(exclude_fields, list):
+            raise PipelineSchemaException(f"exclude_fields should be a list, found {type(exclude_fields)}")
         if self.create_schema is not None:
             operation_dict = {
                 "type": "query",
@@ -516,6 +654,12 @@ class AdvancedDataset(SummaryDataset):
             required_fields (list[list[str]], optional): Fields Required to run query. If None is excluded. Defaults to None.
             exclude_fields (list[list[str]], optional): Fields that would indicate to exclude running the query. If None is excluded. Defaults to None.
         """
+        if not isinstance(dataset_name, str):
+            raise PipelineSchemaException(f"dataset_name should be a str, found {type(dataset_name)}")
+        if required_fields is not None and not isinstance(required_fields, list):
+            raise PipelineSchemaException(f"required_fields should be a list, found {type(required_fields)}")
+        if exclude_fields is not None and not isinstance(exclude_fields, list):
+            raise PipelineSchemaException(f"exclude_fields should be a list, found {type(exclude_fields)}")
         if self.create_schema is not None:
             operation_dict = {
                 "type": "datasaet",
@@ -552,6 +696,20 @@ class AdvancedDataset(SummaryDataset):
         Raises:
             AttributeError: How must be one of [left,right,inner,outer]
         """
+        if not isinstance(dataset1_name, str):
+            raise PipelineSchemaException(f"dataset1_name should be a str, found {type(dataset1_name)}")
+        if not isinstance(dataset2_name, str):
+            raise PipelineSchemaException(f"dataset2_name should be a str, found {type(dataset2_name)}")
+        if not isinstance(how, str):
+            raise PipelineSchemaException(f"how should be a str, found {type(how)}")
+        if not isinstance(left_on, str):
+            raise PipelineSchemaException(f"left_on should be a str, found {type(left_on)}")
+        if not isinstance(right_on, str):
+            raise PipelineSchemaException(f"right_on should be a str, found {type(right_on)}")
+        if required_fields is not None and not isinstance(required_fields, list):
+            raise PipelineSchemaException(f"required_fields should be a list, found {type(required_fields)}")
+        if exclude_fields is not None and not isinstance(exclude_fields, list):
+            raise PipelineSchemaException(f"exclude_fields should be a list, found {type(exclude_fields)}")
         how = how.lower()
         if how not in ["left","right","inner","outer"]:
             raise AttributeError('how must be one of "left","right","inner","outer"')
@@ -599,6 +757,18 @@ class AdvancedDataset(SummaryDataset):
             required_fields (list[list[str]], optional): Fields Required to run query. If None is excluded. Defaults to None.
             exclude_fields (list[list[str]], optional): Fields that would indicate to exclude running the query. If None is excluded. Defaults to None.
         """
+        if not isinstance(function_name, str):
+            raise PipelineSchemaException(f"function_name should be a str, found {type(function_name)}")
+        if function_fields_dict is not None and not isinstance(function_fields_dict, list):
+            raise PipelineSchemaException(f"function_fields_dict should be a list, found {type(function_fields_dict)}")
+        if function_params_dict is not None and not isinstance(function_params_dict, list):
+            raise PipelineSchemaException(f"function_params_dict should be a list, found {type(function_params_dict)}")
+        if function_environment_variables_dict is not None and not isinstance(function_environment_variables_dict, list):
+            raise PipelineSchemaException(f"function_environment_variables_dict should be a list, found {type(function_environment_variables_dict)}")
+        if required_fields is not None and not isinstance(required_fields, list):
+            raise PipelineSchemaException(f"required_fields should be a list, found {type(required_fields)}")
+        if exclude_fields is not None and not isinstance(exclude_fields, list):
+            raise PipelineSchemaException(f"exclude_fields should be a list, found {type(exclude_fields)}")
         function_dict = {
             "type" : "function",
             "name" : function_name
@@ -629,6 +799,12 @@ class AdvancedDataset(SummaryDataset):
             required_fields (list[list[str]], optional): Fields Required to run query. If None is excluded. Defaults to None.
             exclude_fields (list[list[str]], optional): Fields that would indicate to exclude running the query. If None is excluded. Defaults to None.
         """
+        if not isinstance(filters_list, list):
+            raise PipelineSchemaException(f"filters_list should be a list, found {type(filters_list)}")
+        if required_fields is not None and not isinstance(required_fields, list):
+            raise PipelineSchemaException(f"required_fields should be a list, found {type(required_fields)}")
+        if exclude_fields is not None and not isinstance(exclude_fields, list):
+            raise PipelineSchemaException(f"exclude_fields should be a list, found {type(exclude_fields)}")
         operation_dict = {
             "type": "filter",
             "filters": filters_list
@@ -652,6 +828,16 @@ class AdvancedDataset(SummaryDataset):
         Raises:
             AttributeError: _description_
         """
+        if not isinstance(arithmetic_operator, str):
+            raise PipelineSchemaException(f"arithmetic_operator should be a str, found {type(arithmetic_operator)}")
+        if not isinstance(column, str):
+            raise PipelineSchemaException(f"column should be a str, found {type(column)}")
+        if not isinstance(by, float):
+            raise PipelineSchemaException(f"by should be a float, found {type(by)}")
+        if required_fields is not None and not isinstance(required_fields, list):
+            raise PipelineSchemaException(f"required_fields should be a list, found {type(required_fields)}")
+        if exclude_fields is not None and not isinstance(exclude_fields, list):
+            raise PipelineSchemaException(f"exclude_fields should be a list, found {type(exclude_fields)}")
         if arithmetic_operator not in ["+","-","*","/"]:
             raise AttributeError('arithmetic_operation must be one of "+","-","*","/"')
         
@@ -693,6 +879,12 @@ class Summary(PipelineComponent):
             prefix (str): Text for the prefix of the summary
             suffix (str): Text for the suffix of the summary
         """
+        if not isinstance(datasets, list):
+            raise PipelineSchemaException(f"datasets should be a list, found {type(datasets)}")
+        if not isinstance(prefix, str):
+            raise PipelineSchemaException(f"prefix should be a str, found {type(prefix)}")
+        if not isinstance(suffix, str):
+            raise PipelineSchemaException(f"suffix should be a str, found {type(suffix)}")
         self.datasets = datasets
         self.prefix = prefix
         self.suffix = suffix
@@ -731,6 +923,14 @@ class Visualization(PipelineComponent):
             title (str): Visualization Title
             description (str): Description of Visualization
         """
+        if not isinstance(dataset, Dataset):
+            raise PipelineSchemaException(f"dataset should be a Dataset, found {type(dataset)}")
+        if not isinstance(title, str):
+            raise PipelineSchemaException(f"title should be a str, found {type(title)}")
+        if not isinstance(description, str):
+            raise PipelineSchemaException(f"description should be a str, found {type(description)}")
+        if not isinstance(tooltip, bool):
+            raise PipelineSchemaException(f"tooltip should be a bool, found {type(tooltip)}")
         self.dataset = dataset.get_name()
         self.title = title
         self.description = description
@@ -750,6 +950,10 @@ class PieChart(Visualization):
             label_column (str): Name of column to that has the name of each pie slice
             tooltip (bool): Whether tooltips should be shown
         """
+        if not isinstance(value_column, str):
+            raise PipelineSchemaException(f"value_column should be a str, found {type(value_column)}")
+        if not isinstance(label_column, str):
+            raise PipelineSchemaException(f"label_column should be a str, found {type(label_column)}")
         super().__init__(dataset, title, description, tooltip)
         self.value_column = value_column
         self.label_column = label_column
@@ -784,6 +988,10 @@ class LineGraph(Visualization):
             y_axis (str): Column Name to use for y_axis
             tooltip (bool): Whether tooltips should be shown
         """
+        if not isinstance(x_axis, str):
+            raise PipelineSchemaException(f"x_axis should be a str, found {type(x_axis)}")
+        if not isinstance(y_axis, str):
+            raise PipelineSchemaException(f"y_axis should be a str, found {type(y_axis)}")
         super().__init__(dataset, title, description, tooltip)
         self.x_axis = x_axis
         self.y_axis = y_axis
@@ -818,6 +1026,10 @@ class MultiLineGraph(Visualization):
             y_axis (str): Column Name to use for y_axis
             tooltip (bool): Whether tooltips should be shown
         """
+        if not isinstance(x_axis, str):
+            raise PipelineSchemaException(f"x_axis should be a str, found {type(x_axis)}")
+        if not isinstance(y_axis, str):
+            raise PipelineSchemaException(f"y_axis should be a str, found {type(y_axis)}")
         super().__init__(dataset, title, description, tooltip)
         self.x_axis = x_axis
         self.y_axis = y_axis
@@ -855,6 +1067,12 @@ class MultiColumnLineGraph(Visualization):
             y_axis (str): Axis title for y_axis
             tooltip (bool): Whether tooltips should be shown
         """
+        if not isinstance(x_axis, str):
+            raise PipelineSchemaException(f"x_axis should be a str, found {type(x_axis)}")
+        if not isinstance(columns, list):
+            raise PipelineSchemaException(f"columns should be a list, found {type(columns)}")
+        if not isinstance(y_axis, str):
+            raise PipelineSchemaException(f"y_axis should be a str, found {type(y_axis)}")
         super().__init__(dataset, title, description, tooltip)
         self.x_axis = x_axis
         self.y_axis = columns
@@ -890,6 +1108,8 @@ class Histogram(Visualization):
             value_column (str): Column from dataset with values for histogram
             tooltip (bool): Whether tooltips should be shown
         """
+        if not isinstance(value_column, str):
+            raise PipelineSchemaException(f"value_column should be a str, found {type(value_column)}")
         super().__init__(dataset, title, description, tooltip)
         self.value_column = value_column
         
@@ -911,7 +1131,7 @@ class Histogram(Visualization):
 class BarChart(Visualization):
     """Pipeline Bar Chart Definition
     """
-    def __init__(self, dataset: Dataset, title: str, description: str, value_column: str, label_column: str, color_column: str, tooltip: bool = True):
+    def __init__(self, dataset: Dataset, title: str, description: str, value_column: str, label_column: str, tooltip: bool = True):
         """Creates Pipeline Bar Chart Definition
 
         Args:
@@ -919,9 +1139,13 @@ class BarChart(Visualization):
             title (str): Line Graph Title
             description (str): Description of Line Graph
             value_column (str): Name of column with stacked bar size
-            index_column (str): Name of column with indexes for x_axis
+            label_column (str): Name of column with indexes for x_axis
             tooltip (bool): Whether tooltips should be shown
         """
+        if not isinstance(value_column, str):
+            raise PipelineSchemaException(f"value_column should be a str, found {type(value_column)}")
+        if not isinstance(label_column, str):
+            raise PipelineSchemaException(f"label_column should be a str, found {type(label_column)}")
         super().__init__(dataset, title, description, tooltip)
         self.value_column = value_column
         self.label_column = label_column
@@ -952,6 +1176,12 @@ class StackedBarChart(Visualization):
             color_column (str): Name of column with label for each stacked bar
             tooltip (bool): Whether tooltips should be shown
         """
+        if not isinstance(value_column, str):
+            raise PipelineSchemaException(f"value_column should be a str, found {type(value_column)}")
+        if not isinstance(index_column, str):
+            raise PipelineSchemaException(f"index_column should be a str, found {type(index_column)}")
+        if not isinstance(color_column, str):
+            raise PipelineSchemaException(f"color_column should be a str, found {type(color_column)}")
         super().__init__(dataset, title, description, tooltip)
         self.value_column = value_column
         self.index_column = index_column
@@ -979,15 +1209,21 @@ class Action(PipelineComponent):
             name (str): Name of the action
             function_name (str): Name of the function in the function dict passed to the Pipeline
         """
+        if not isinstance(name, str):
+            raise PipelineSchemaException(f"name should be a str, found {type(name)}")
+        if not isinstance(function_name, str):
+            raise PipelineSchemaException(f"function_name should be a str, found {type(function_name)}")
+        if output_field is not None and not isinstance(output_field, str):
+            raise PipelineSchemaException(f"output_field should be a str, found {type(output_field)}")
         self.command_name = name
         self.output_field = output_field
-        self.attributes = {}
+        self.attributes = []
         self.function_name = function_name
         self.params = {}
         self.connectors = []
         self.field_strings = {}
         
-    def add_attribute(self, name: str, field: str, optional: bool = True) -> None:
+    def add_attribute(self, name: str, field: Union[str,PipelineField], optional: bool = True) -> None:
         """Adds an attribute that will allow your command to include a field's value as an argument to the python function
 
         Args:
@@ -995,12 +1231,19 @@ class Action(PipelineComponent):
             field (str): The name of the field to get the value for the attribute from
             optional (bool): Whether the attribute is optional for the action to run
         """
+        if not isinstance(name, str):
+            raise PipelineSchemaException(f"name should be a str, found {type(name)}")
+        if not isinstance(field, str) and not isinstance(field, PipelineField):
+            raise PipelineSchemaException(f"field should be a str or PipelineField, found {type(name)}")
+        if optional is not None and not isinstance(optional, bool):
+            raise PipelineSchemaException(f"optional should be a bool, found {type(optional)}")
+        name = name if isinstance(name,str) else name.get_section() + "." + name.get_name()
         attribute_dict = {
             "name": name,
             "field": field,
             "optional": optional
         }
-        self.attributes[name] = attribute_dict
+        self.attributes.append(attribute_dict)
         
     def add_param(self, name: str, value: Any) -> None:
         """Adds a parameter to the Python Function. This is a static value that will be passed to your python function as an argument.
@@ -1009,6 +1252,8 @@ class Action(PipelineComponent):
             name (str): Parameter name
             value (Any): Parameter value
         """
+        if not isinstance(name, str):
+            raise PipelineSchemaException(f"name should be a str, found {type(name)}")
         self.params[name] = value
         
     def add_connector(self, connector_name: str, param_name: str) -> None:
@@ -1018,6 +1263,10 @@ class Action(PipelineComponent):
             connector_name (str): Name of the connector
             param_name (str): Name of the parameter in the function associated with this action
         """
+        if not isinstance(connector_name, str):
+            raise PipelineSchemaException(f"connector_name should be a str, found {type(connector_name)}")
+        if not isinstance(param_name, str):
+            raise PipelineSchemaException(f"param_name should be a str, found {type(param_name)}")
         self.connectors.append({
             "name": connector_name,
             "param": param_name
@@ -1031,6 +1280,10 @@ class Action(PipelineComponent):
             name (str): Name of the parameter in the function
             field_string (str): The string to populate with fields
         """
+        if not isinstance(name, str):
+            raise PipelineSchemaException(f"name should be a str, found {type(name)}")
+        if not isinstance(field_string, str):
+            raise PipelineSchemaException(f"field_string should be a str, found {type(field_string)}")
         self.field_strings[name] = field_string
 
     def get_name(self) -> str:
@@ -1069,6 +1322,10 @@ class ConsoleAction(Action):
             name (str): name of the action
             output_field (Union[str,None], optional): Output field to store result in. Defaults to None.
         """
+        if not isinstance(name, str):
+            raise PipelineSchemaException(f"name should be a str, found {type(name)}")
+        if output_field is not None and not isinstance(output_field, str):
+            raise PipelineSchemaException(f"output_field should be a str, found {type(output_field)}")
         super().__init__(name, "generate_console_command", output_field)
         
     def add_attribute(self, name: str, field: str, optional: bool = True, tag: Union[str,None] = None) -> None:
@@ -1080,6 +1337,8 @@ class ConsoleAction(Action):
             optional (bool): Whether the attribute is optional for the action to run
             tag (Union[str,None], optional): Value to use for the tag in the console, I.E. --help or -h. If None, dsl-spa uses --{attribute_name}. Defaults to None.
         """
+        if tag is not None and not isinstance(tag, str):
+            raise PipelineSchemaException(f"tag should be a str, found {type(tag)}")
         super().add_attribute(name, field, optional)
         if tag is not None:
             self.attributes[name]["tag"] = tag
@@ -1095,6 +1354,10 @@ class Command(PipelineComponent):
             name (str): name of the command
             actions (list[Action]): list of actions that define the command
         """
+        if not isinstance(name, str):
+            raise PipelineSchemaException(f"name should be a str, found {type(name)}")
+        if not isinstance(actions, list):
+            raise PipelineSchemaException(f"actions should be a list, found {type(actions)}")
         self.command_name = name
         self.actions = actions
         
@@ -1120,6 +1383,10 @@ class PipelineSchema:
             pipeline_name (str): Pipeline Name
             fields (list[PipelineField]): List of fields for pipeline
         """
+        if not isinstance(pipeline_name, str):
+            raise PipelineSchemaException(f"pipeline_name should be a str, found {type(pipeline_name)}")
+        if not isinstance(fields, list):
+            raise PipelineSchemaException(f"fields should be a list, found {type(fields)}")
         self.name = pipeline_name
         self.fields = fields
         self.schema = {
@@ -1158,7 +1425,11 @@ class PipelineSchema:
     
 class CommandPipelineSchema(PipelineSchema):
     
-    def __init__(self, pipeline_name, fields, actions: list[Action], commands: list[Command]):
+    def __init__(self, pipeline_name: str, fields: list[PipelineField], actions: list[Action], commands: list[Command]):
+        if not isinstance(actions, list):
+            raise PipelineSchemaException(f"actions should be a list, found {type(actions)}")
+        if not isinstance(commands, list):
+            raise PipelineSchemaException(f"commands should be a list, found {type(commands)}")
         super().__init__(pipeline_name, fields)
         self.actions = actions
         self.commands = commands
@@ -1198,6 +1469,12 @@ class BasicPipelineSchema(PipelineSchema):
             csvs (list[CSV]): List of CSVs for Pipeline
             datasets (list[Dataset]): List of Datasets for pipeline
         """
+        if not isinstance(queries, list):
+            raise PipelineSchemaException(f"queries should be a list, found {type(queries)}")
+        if not isinstance(csvs, list):
+            raise PipelineSchemaException(f"csvs should be a list, found {type(csvs)}")
+        if not isinstance(datasets, list):
+            raise PipelineSchemaException(f"datasets should be a list, found {type(datasets)}")
         super().__init__(pipeline_name, fields)
         self.queries = queries
         self.csvs = csvs
@@ -1264,6 +1541,14 @@ class StandardPipelineSchema(BasicPipelineSchema):
             summary (Summary, optional): Summary for pipeline. Defaults to None.
             visualizations (list[Visualization], optional): Visualizations for pipeline. Defaults to None.
         """
+        if not isinstance(scope, str):
+            raise PipelineSchemaException(f"scope should be a str, found {type(scope)}")
+        if not isinstance(scope_description, str):
+            raise PipelineSchemaException(f"scope_description should be a str, found {type(scope_description)}")
+        if summary is not None and not isinstance(summary, Summary):
+            raise PipelineSchemaException(f"summary should be a Summary, found {type(summary)}")
+        if visualizations is not None and not isinstance(visualizations, list):
+            raise PipelineSchemaException(f"visualizations should be a list, found {type(visualizations)}")
         super().__init__(pipeline_name, fields, queries, csvs, datasets)
         self.scope = scope
         self.scope_description = scope_description
@@ -1312,6 +1597,8 @@ class DashboardPipelineSchema(StandardPipelineSchema):
             summary (Summary, optional): Summary for pipeline. Defaults to None.
             visualizations (list[Visualization], optional): Visualizations for pipeline. Defaults to None.
         """
+        if not isinstance(filters, list):
+            raise PipelineSchemaException(f"filters should be a list, found {type(filters)}")
         super().__init__(pipeline_name, fields, queries, csvs, datasets, scope, scope_description, summary, visualizations)
         self.filters = filters
         
@@ -1337,6 +1624,12 @@ class SemanticCachePipelineSchema(BasicPipelineSchema):
             results_columns (list[str]): Name of Columns to be output from semantic cache when getting results
             empty_cache_error_message (str, optional): Error message to throw when the semantic cache is empty after processing. Defaults to None.
         """
+        if not isinstance(semantic_cache_dataset, str):
+            raise PipelineSchemaException(f"semantic_cache_dataset should be a str, found {type(semantic_cache_dataset)}")
+        if not isinstance(results_columns, list):
+            raise PipelineSchemaException(f"results_columns should be a list, found {type(results_columns)}")
+        if empty_cache_error_message is not None and not isinstance(empty_cache_error_message, str):
+            raise PipelineSchemaException(f"empty_cache_error_message should be a str, found {type(empty_cache_error_message)}")
         super().__init__(pipeline_name, fields, queries, csvs, datasets)
         self.semantic_cache_dataset = semantic_cache_dataset
         self.results_columns = results_columns
