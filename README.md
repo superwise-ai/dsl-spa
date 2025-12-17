@@ -14,7 +14,7 @@ Key Features of DSL-SPA
 
 - Executing Commands - generate command sequences or execute python fucntions
 
-For some examples of what you can do with dsl-spa sdk check out the [streamlit demo](https://pipeline-agent.streamlit.app/).
+For some interactive demos of what you can do with dsl-spa sdk check out the [streamlit demo](https://pipeline-agent.streamlit.app/).
 
 ## Getting Started
 
