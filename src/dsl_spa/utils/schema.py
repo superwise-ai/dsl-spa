@@ -881,9 +881,9 @@ class Summary(PipelineComponent):
         """
         if not isinstance(datasets, list):
             raise PipelineSchemaException(f"datasets should be a list, found {type(datasets)}")
-        if not isinstance(prefix, str):
+        if prefix is not None and not isinstance(prefix, str):
             raise PipelineSchemaException(f"prefix should be a str, found {type(prefix)}")
-        if not isinstance(suffix, str):
+        if suffix is not None and not isinstance(suffix, str):
             raise PipelineSchemaException(f"suffix should be a str, found {type(suffix)}")
         self.datasets = datasets
         self.prefix = prefix
