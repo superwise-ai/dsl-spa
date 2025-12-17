@@ -23,12 +23,7 @@ Get started with dsl-spa by installing the Python library via pip
 ```
 pip install dsl-spa
 ```
-
-A standard pipeline can be imported with
-
-```
-from dsl_spa.pipeline.pipeline import StandardPipeline
-```
+To see some example pipelines checkout these [jupyter notebooks](https://github.com/superwise-ai/dsl-spa/blob/main/examples).
 
 For more details on constructing a pipeline, reference [Building a Pipeline](https://github.com/superwise-ai/dsl-spa/blob/main/docs/Creating_a_Pipeline_Schema.md).
 
