@@ -1299,7 +1299,7 @@ class Action(PipelineComponent):
             "name": self.command_name
         }
         schema["function"] = self.function_name
-        if len(self.attributes.keys()) > 0:
+        if len(self.attributes) > 0:
             schema["attributes"] = self.attributes
         if len(self.params) > 0:
             schema["params"] = self.params
