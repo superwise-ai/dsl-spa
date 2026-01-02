@@ -435,7 +435,7 @@ class CommandPipeline(Pipeline):
                 missing_fields = self.get_missing_fields_for_action(action_name)
                 if len(missing_fields) > 0:
                     raise PipelineException(f"Missing fields: {', '.join(missing_fields)}")
-                else: 
+                else:
                     raise PipelineException("Invalid action request")
                     
     def execute_action(self, action_name: str):
@@ -1390,3 +1390,116 @@ class DashboardPipeline(StandardPipeline):
         self.build_datasets()
         self.build_summary()
         self.build_visualizations()
+        
+class CompletePipeline(DashboardPipeline,CommandPipeline):
+    
+    def __init__(self, fields_input_dict, json_schema, connectors, functions = pipeline_functions_dict):
+        DashboardPipeline.__init__(fields_input_dict, json_schema, connectors, functions)
+        self.actions = {}
+        self.commands = {}
+        self.initiate_command_pipeline()
+        
+    def create_dataset(self, dataset: dict) -> pd.DataFrame:
+        """Creates dataset 
+
+        Args:
+            dataset (dict): Dataset dict definition from the schema
+
+        Raises:
+            Exception: No dataset was generated based on the schema
+
+        Returns:
+            pd.DataFrame: Dataset
+        """
+        data = None
+        for process in dataset["create"]:
+            should_run = self.validate_function_should_run(process)
+            if not should_run:
+                continue
+            process_type = process["type"]
+            if process_type == "query":
+                data = self.create_dataset_from_query(process)
+            elif process_type == "multiplex_query":
+                data = self.create_dataset_from_multiplexed_query(process)
+            elif process_type == "filter":
+                data = self.apply_filters_to_dataset(data,process)
+            elif process_type == "function":
+                data = self.apply_function_to_dataset(data, process)
+            elif process_type == "merge":
+                data = self.create_dataset_from_merge(process)
+            elif process_type == "dataset":
+                data = self.create_dataset_from_dataset(process)
+            elif process_type == "arithmetic":
+                data = self.apply_arithmetic_operation_to_dataset(data, process)
+            elif process_type == "command":
+                self.apply_command(data, process)
+        if data is None:
+            dataset_name = dataset["name"]
+            raise Exception(f"Dataset {dataset_name} is missing necessary operations to create.")
+        return data
+    
+    def apply_command(self, data: pd.DataFrame, process: dict):
+        include_dataset = False if "include_dataset" not in process.keys() else process["include_dataset"]
+        command_field = "command_name" if "command_field" not in process.keys() else process["command_field"]
+        if include_dataset:
+            self.process_dataset_command(command_field, data)
+        else:
+            self.process_dataset_command(command_field)
+
+    def process_dataset_command(self, command_field = "command_name", df: Union[pd.DataFrame,None] = None):
+        """Executes a command's actions in order
+
+        Args:
+            command_field (str, optional): Pipeline field containing the name of the command. Defaults to "command_name".
+            df (Union[pd.DataFrame,None], optional): Dataset to include in command's action parameters. Defaults to None.
+
+        Raises:
+            PipelineException: No Command with the value of the field command_field was found
+            PipelineException: The missing fields for a specific command
+            PipelineException: The command request could not be processed
+        """
+        command = self.get_field(command_field)
+        if command not in self.commands.keys():
+            raise PipelineException("Command Not Found")
+        command = self.commands[command]
+        for action_name in command:
+            if self.validate_action(action_name):
+                self.execute_dataset_action(action_name, df)
+            else:
+                missing_fields = self.get_missing_fields_for_action(action_name)
+                if len(missing_fields) > 0:
+                    raise PipelineException(f"Missing fields: {', '.join(missing_fields)}")
+                else:
+                    raise PipelineException("Invalid action request")
+                    
+    def execute_dataset_action(self, action_name: str, df: Union[pd.DataFrame,None] = None):
+        """Executes the function associated with an action and stores its output if it has one.
+
+        Args:
+            action_name (str): Name of the action to execute
+            df (Union[pd.DataFrame,None], optional): Dataset to include in action parameters. Defaults to None.
+        """
+        action_dict = self.actions[action_name]
+        function_name = action_dict["function"]
+        args = {}
+        if df is not None:
+            args["df"] = df
+        for attribute_name,attribute_dict in action_dict["attributes"].items():
+            field_name = attribute_dict["field"]
+            if self.check_for_field(field_name):
+                field_value = self.get_field(field_name)
+                args[attribute_name] = field_value
+        if "params" in action_dict.keys():
+            for k,v in action_dict["params"].items():
+                args[k] = v
+        if "connectors" in action_dict.keys():
+            for connector_dict in action_dict["connectors"]:
+                connector_name = connector_dict["name"]
+                param_name = connector_dict["param"]
+                args[param_name] = self.connectors[connector_name]
+        if "field_strings" in action_dict.keys():
+            for k,v in action_dict["field_strings"].items():
+                args[k] = self.add_fields_to_clause(v)
+        result = self.functions[function_name](**args)
+        if "output_field" in action_dict.keys():
+            self.set_field(action_dict["output_field"], result)
