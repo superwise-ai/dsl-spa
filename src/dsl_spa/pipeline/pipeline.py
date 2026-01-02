@@ -1439,6 +1439,12 @@ class CompletePipeline(DashboardPipeline,CommandPipeline):
         return data
     
     def apply_command(self, data: pd.DataFrame, process: dict):
+        """Applies command using dataset
+
+        Args:
+            data (pd.DataFrame): Dataset to apply function to
+            process (dict): Specific dataset dict definition from the schema
+        """
         include_dataset = False if "include_dataset" not in process.keys() else process["include_dataset"]
         command_field = "command_name" if "command_field" not in process.keys() else process["command_field"]
         if include_dataset:
