@@ -294,6 +294,9 @@ def sort_values(df: pd.DataFrame, by: list, ascending: bool = True) -> pd.DataFr
     df = df.sort_values(by=by,ascending=ascending)
     return df
 
+def print_record_count(df: pd.DataFrame, dataset_name: str, operation: str):
+    print(f"There are {len(df.index)} in {dataset_name} after operation {operation}")
+
 pipeline_functions_dict = {
     "build_time_series_counts": build_time_series_counts,
     "add_date_information": add_date_information,
@@ -305,5 +308,6 @@ pipeline_functions_dict = {
     "filter_by_value": filter_by_value,
     "remove_by_value": remove_by_value,
     "value_counts": value_counts,
-    "sort_values": sort_values
+    "sort_values": sort_values,
+    "print_record_count": print_record_count
 }
