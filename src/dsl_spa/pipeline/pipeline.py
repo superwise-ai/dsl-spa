@@ -1433,6 +1433,8 @@ class CompletePipeline(DashboardPipeline,CommandPipeline):
                 data = self.apply_arithmetic_operation_to_dataset(data, process)
             elif process_type == "command":
                 self.apply_command(data, process)
+            elif process_type == "action":
+                self.apply_action(data, process)
         if data is None:
             dataset_name = dataset["name"]
             raise Exception(f"Dataset {dataset_name} is missing necessary operations to create.")
@@ -1447,16 +1449,50 @@ class CompletePipeline(DashboardPipeline,CommandPipeline):
         """
         include_dataset = False if "include_dataset" not in process.keys() else process["include_dataset"]
         command_field = "command_name" if "command_field" not in process.keys() else process["command_field"]
+        command_name = None if "name" not in process.keys() else process["name"]
         if include_dataset:
-            self.process_dataset_command(command_field, data)
+            if command_name is not None:
+                self.process_dataset_command(command_name, data)
+            else:
+                self.process_dataset_command_by_field(command_field, data)
         else:
-            self.process_dataset_command(command_field)
+            if command_name is not None:
+                self.process_dataset_command(command_name)
+            else:
+                self.process_dataset_command_by_field(command_field)
+            
+    def apply_action(self, data: pd.DataFrame, process: dict):
+        include_dataset = False if "include_dataset" not in process.keys() else process["include_dataset"]
+        """Executes a single action 
 
-    def process_dataset_command(self, command_field = "command_name", df: Union[pd.DataFrame,None] = None):
-        """Executes a command's actions in order
+        Raises:
+            PipelineException: Action not found
+        """
+        action_name = None if "name" not in process.keys() else process["name"]
+        if action_name is not None:
+            if include_dataset:
+                self.execute_dataset_action(action_name,data)
+            else:
+                self.execute_dataset_action(action_name)
+        else:
+            raise PipelineException("Action Name Not Found in Schema")
+            
+        
+    def process_dataset_command_by_field(self, command_field = "command_name", df: Union[pd.DataFrame,None] = None):
+        """Reads a command from a field and executes its actions in order
 
         Args:
             command_field (str, optional): Pipeline field containing the name of the command. Defaults to "command_name".
+            df (Union[pd.DataFrame,None], optional): Dataset to include in command's action parameters. Defaults to None.
+        """
+        command_name = self.get_field(command_field)
+        self.process_dataset_command(command_name, df)
+
+    def process_dataset_command(self, command_name: str, df: Union[pd.DataFrame,None] = None):
+        """Executes a command's actions in order
+
+        Args:
+            command_name (str):Name of the command.
             df (Union[pd.DataFrame,None], optional): Dataset to include in command's action parameters. Defaults to None.
 
         Raises:
@@ -1464,10 +1500,9 @@ class CompletePipeline(DashboardPipeline,CommandPipeline):
             PipelineException: The missing fields for a specific command
             PipelineException: The command request could not be processed
         """
-        command = self.get_field(command_field)
-        if command not in self.commands.keys():
+        if command_name not in self.commands.keys():
             raise PipelineException("Command Not Found")
-        command = self.commands[command]
+        command = self.commands[command_name]
         for action_name in command:
             if self.validate_action(action_name):
                 self.execute_dataset_action(action_name, df)
