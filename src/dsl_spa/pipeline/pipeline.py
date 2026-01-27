@@ -630,7 +630,7 @@ class BasicPipeline(Pipeline):
                 return True
         return False
     
-    def build_query(self, query: dict) -> str:
+    def build_query(self, query_schema: dict) -> str:
         """Contructs a query using its query dict definition from the schema
 
         Args:
@@ -640,7 +640,7 @@ class BasicPipeline(Pipeline):
             str: Full query for data store
         """
         query = ""
-        for clause in query["clauses"]:
+        for clause in query_schema["clauses"]:
             optional = clause["optional"]
             clause_text = clause["clause"]
             clause_text = self.add_fields_to_clause(clause_text,sanitize_for_sql=True)
