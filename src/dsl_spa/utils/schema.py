@@ -1,4 +1,7 @@
 from typing import Any, Union
+import pandas as pd
+import numpy as np
+import os
 
 class PipelineSchemaException(Exception):
     """Pipeline Schema Exception. A PipelineSchemaException is created when an error is generated trying to create the Pipeline Schema.
@@ -1652,3 +1655,53 @@ class SemanticCachePipelineSchema(BasicPipelineSchema):
         if self.empty_cache_error_message is not None:
             semantic_cache_schema["empty_cache_error_message"] = self.empty_cache_error_message
         self.schema["semantic_cache"] = semantic_cache_schema
+        
+def generate_schema_from_csv(filename):
+    df = pd.read_csv(filename)
+    columns = df.columns.values
+    fields = []
+    for col in columns:
+        field_type = "string"
+        if df.dtypes[col] == np.dtype("float64"):
+            field_type = "float"
+        elif df.dtypes[col] == np.dtype("int64"):
+            field_type = "int"
+        description = col
+        description = description.replace("_"," ").title()
+        fields.append(PipelineField(field_name=f"base.{col}",
+                    field_type=field_type,
+                    required=False,
+                    description=description))
+    csv_name = os.path.basename(filename)
+    csv = CSV(csv_name=csv_name,connector_name="csvs",filename=filename)
+    for col in columns:
+        column_value = f"base.{col}"
+        csv.add_column_filter(f"base.{col}",column_name=col,value="{"+column_value+"}")
+    csvs = [csv]
+    dataset_name = csv_name.replace("_"," ").title() + " Data"
+    summary_by_row = ""
+    for col in columns:
+        column_name = col.replace("_"," ").title()
+        summary_by_row += column_name + " is {" + col + "}. "
+    dataset = SummaryDataset(dataset_name=dataset_name,
+                            summary_by_row=summary_by_row,
+                            empty_dataset="No data found for that request.")
+    dataset.create_from_query(csv_name)
+    datasets=[dataset]
+    summary = Summary(datasets=datasets)
+    scope = f"Data for {csv_name.replace("_"," ").title()}."
+    scope_description = f"Details on {columns[0]}"
+    for col in columns[1:-1]:
+        scope_description += f" {col.replace("_"," ").title()},"
+    if len(columns) > 1:
+        scope_description += f" and {columns[-1].replace("_"," ").title()}"
+    pipeline_schema = StandardPipelineSchema(pipeline_name=os.path.splitext(csv_name)[0]+"_pipeline",
+                                         fields=fields,
+                                         scope=scope,
+                                         scope_description=scope_description,
+                                         queries=[],
+                                         csvs=csvs,
+                                         datasets=datasets,
+                                         summary=summary,
+                                         visualizations=[])
+    return pipeline_schema.get_schema()
