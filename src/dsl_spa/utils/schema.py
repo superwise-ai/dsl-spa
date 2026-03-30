@@ -1689,12 +1689,12 @@ def generate_schema_from_csv(filename):
     dataset.create_from_query(csv_name)
     datasets=[dataset]
     summary = Summary(datasets=datasets)
-    scope = f"Data for {csv_name.replace("_"," ").title()}."
+    scope = f"Data for {csv_name.replace('_',' ').title()}."
     scope_description = f"Details on {columns[0]}"
     for col in columns[1:-1]:
-        scope_description += f" {col.replace("_"," ").title()},"
+        scope_description += f" {col.replace('_',' ').title()},"
     if len(columns) > 1:
-        scope_description += f" and {columns[-1].replace("_"," ").title()}"
+        scope_description += f" and {columns[-1].replace('_',' ').title()}"
     pipeline_schema = StandardPipelineSchema(pipeline_name=os.path.splitext(csv_name)[0]+"_pipeline",
                                          fields=fields,
                                          scope=scope,
