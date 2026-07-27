@@ -124,11 +124,19 @@ The Basic Semantic Cache Pipeline extends the Basic Pipeline giving the user acc
 
  The function `cleanse_cache()` and `make_cache_comparisons()`, while being built into the BasicSemanticCachePipeline class, are expected to be called as part of the process for building a dataset. This lets the developer have complete control over what data transformations are applied before and after the semantic cache comparisons are made.
 
-In order to leverage the BasicSemanticCachePipeline, a developer needs to implement the `make_cache_comparisons()` function that uses a text embedding to compare semantic similarities between the user input and the cache values
+In order to leverage the BasicSemanticCachePipeline, a developer needs to implement the `make_cache_comparisons()` function that uses a text embedding to compare semantic similarities between the user input and the cache values. The embedding client is supplied by the developer, so the BasicSemanticCachePipeline itself adds no dependencies beyond the base install. The module exports a `cosine_similarity(a, b)` helper for scoring an input embedding against a cache embedding.
 
 ### OpenAI Semantic Cache Pipeline
 
 The OpenAI Semantic Cache Pipeline implements the `make_cache_comparisons()` function for any OpenAI compatible embedding model.
+
+This is the one pipeline that needs an optional dependency (`langchain-openai`). Install it with:
+
+```
+pip install dsl-spa[semantic-cache]
+```
+
+Calling `make_cache_comparisons()` without it raises an `ImportError` pointing at that command.
 
 A flow running a OpenAI Semantic Cache Pipeline would look like:
 

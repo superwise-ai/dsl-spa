@@ -1,12 +1,28 @@
 from dsl_spa.pipeline.pipeline import BasicPipeline, PipelineException
 from dsl_spa.pipeline.pipeline_functions import pipeline_functions_dict
 from dsl_spa.pipeline.connector import Connector
-from langchain_openai import OpenAIEmbeddings
-from sentence_transformers import util
 import ast
 from typing import Any, Union
+import numpy as np
 import pandas as pd
-        
+
+def cosine_similarity(a: Union[list[float],np.ndarray], b: Union[list[float],np.ndarray]) -> float:
+    """Computes the cosine similarity between two embedding vectors
+
+    Args:
+        a (Union[list[float],np.ndarray]): First embedding vector
+        b (Union[list[float],np.ndarray]): Second embedding vector
+
+    Returns:
+        float: Cosine similarity of the two vectors, or 0.0 if either vector is all zeros
+    """
+    a = np.asarray(a, dtype=np.float64)
+    b = np.asarray(b, dtype=np.float64)
+    denominator = np.linalg.norm(a) * np.linalg.norm(b)
+    if denominator == 0:
+        return 0.0
+    return float(np.dot(a, b) / denominator)
+
 class BasicSemanticCachePipeline(BasicPipeline):
     """The BasicSemanticCachePipeline is a Specialized Pipeline for leveraging Semantic Caches to simplify LLM use cases. This class needs to have its embedding connected in a subclass.
     This class is ideal for implementing simplified Semantic Caches that would otherwise require large semantic caches to cover many specific values.
@@ -252,9 +268,19 @@ class OpenAISemanticCachePipeline(BasicSemanticCachePipeline):
             model (str, optional): Name of embedding model to use. Defaults to None.
             similarity_minimum (float, optional): Minimum similarity value to keep in dataset. If None, does not delete any values. Defaults to None.
 
+        Raises:
+            ImportError: langchain-openai is not installed
+
         Returns:
             pd.DataFrame: _description_
         """
+        try:
+            from langchain_openai import OpenAIEmbeddings
+        except ImportError as e:
+            raise ImportError(
+                "OpenAISemanticCachePipeline requires langchain-openai. "
+                "Install it with `pip install dsl-spa[semantic-cache]` or `pip install langchain-openai`."
+            ) from e
         embedding_model = OpenAIEmbeddings(api_key = api_key, openai_api_base = openai_api_base, model = model)
         user_request = self.cleanse_input(field_name)
         input_embedding = embedding_model.embed_query(text = user_request)
@@ -262,7 +288,7 @@ class OpenAISemanticCachePipeline(BasicSemanticCachePipeline):
         print(f"Cache size before comparison: {len(df.index)}")
         for i,row in df.iterrows():
             embedding = ast.literal_eval(row["embedding"])
-            similiarity_scores.append(util.cos_sim(input_embedding, embedding).tolist()[0][0])
+            similiarity_scores.append(cosine_similarity(input_embedding, embedding))
         df["similarity_score"] = similiarity_scores
         if similarity_minimum is not None:
             df = df[df["similarity_score"] >= similarity_minimum]

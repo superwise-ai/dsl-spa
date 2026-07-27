@@ -23,6 +23,12 @@ Get started with dsl-spa by installing the Python library via pip
 ```
 pip install dsl-spa
 ```
+
+The semantic cache pipelines need an embedding model client, which is not part of the base install. To use `OpenAISemanticCachePipeline` (or any OpenAI-compatible embedding endpoint), install the `semantic-cache` extra:
+
+```
+pip install dsl-spa[semantic-cache]
+```
 To see some example pipelines checkout these [jupyter notebooks](https://github.com/superwise-ai/dsl-spa/blob/main/examples).
 
 For more details on constructing a pipeline, reference [Building a Pipeline](https://github.com/superwise-ai/dsl-spa/blob/main/docs/Creating_a_Pipeline_Schema.md).
