@@ -51,16 +51,15 @@ class Pipeline:
         self.process_categorical_values()
         self.required_fields = self.build_required_fields_list(self.schema["fields"])
         self.check_for_required_fields(self.required_fields)
+        if "fields" in self.schema:
+            self.validate_field_types(self.schema["fields"])
         
-    def validate_field_types(self, fields_dict: dict, root: list = []):
-        for key in fields_dict:
-            if not Pipeline.check_if_field_definition(fields_dict[key]):
-                if len(root) == 0:
-                    self.fill_categorical_values(fields_dict[key],[key])
-                else:
-                    self.fill_categorical_values(fields_dict[key],root + key)
+    def validate_field_types(self, fields_definition_dict: dict, root: list = []):
+        for key in fields_definition_dict:
+            if not Pipeline.check_if_field_definition(fields_definition_dict[key]):
+                self.validate_field_types(fields_definition_dict[key],root + [key])
             else:
-                d = fields_dict[key]
+                d = fields_definition_dict[key]
                 field = ".".join(root+[key])
                 if self.check_for_field(field):
                     field_type = d["type"]
@@ -89,15 +88,15 @@ class Pipeline:
         """
         for key in fields_dict:
             if not Pipeline.check_if_field_definition(fields_dict[key]):
-                if len(root) == 0:
-                    self.fill_categorical_values(fields_dict[key],[key])
-                else:
-                    self.fill_categorical_values(fields_dict[key],root + key)
+                self.fill_categorical_values(fields_dict[key],root + [key])
             else:
                 d = fields_dict[key]
                 field = ".".join(root+[key])
                 if d["type"] == "categorical" and self.check_for_field(field):
-                    new_field = field+"_"+self.get_field(field)
+                    value = self.get_field(field)
+                    if isinstance(value, float):
+                        raise PipelineException(f"Field {field} received float value for categorical field. ")
+                    new_field = field+"_"+str(value)
                     self.set_field(new_field,True)
 
     def populate_default_values(self):
@@ -188,14 +187,12 @@ class Pipeline:
                 required = d["required"]
                 name = d["name"]
                 if required:
-                    return [f"{root}.{name}"]
-                else:
-                    return []
+                    fields_list.append(f"{root}.{name}")
             else:
                 if root == "":
                     fields_list.extend(self.build_required_fields_list(fields_dict[key],root=f"{key}"))
                 else:
-                    fields_list.extend(self.build_required_fields_list(fields_dict[key]),root=f"{root}.{key}")
+                    fields_list.extend(self.build_required_fields_list(fields_dict[key],root=f"{root}.{key}"))
         return fields_list
                 
     def check_for_required_fields(self,required_fields: list):
@@ -239,6 +236,8 @@ class Pipeline:
         Returns:
             Any: Value of the field.
         """
+        if not self.check_for_field(field):
+            raise PipelineException(f"{field} not found in field dictionary. Field dict is: {self.field_dict}")
         field_split = field.split('.')
         value = self.field_dict
         for field_name in field_split:
@@ -284,18 +283,25 @@ class Pipeline:
             str: Clause with fields replaced with their value.
         """
         index = 0
-        while '{' in clause[index:]:
+        while True:
             start = clause.find('{', index)
-            end = clause.find('}', index)
+            if start == -1:
+                break
+            end = clause.find('}', start)
+            if end == -1:
+                break
             field = clause[start+1:end]
             if self.check_for_field(field):
                 value = self.get_field(field)
                 if sanitize_for_sql and isinstance(value,str):
                     value = self.sanitize_field_for_sql_query(value)
-                clause = clause[:start] + str(value) + clause[end+1:]
-            if end == -1:
-                break
-            index = end+1
+                value = str(value)
+                clause = clause[:start] + value + clause[end+1:]
+                # Resume after the substituted text, so a value containing braces
+                # is not re-expanded and the cursor tracks the length change.
+                index = start + len(value)
+            else:
+                index = end+1
         return clause
     
     def sanitize_field_for_sql_query(self,field_value: Any) -> Any:
